@@ -6,9 +6,17 @@
     "libsDir": "packages"
   },
   "generators": {
+    "@nx/js:library": {
+      "bundler": "tsc",
+      "linter": "eslint",
+      "minimal": true,
+      "strict": true,
+      "unitTestRunner": "none"
+    },
     "@nx/nest:application": {
       "e2eTestRunner": "none",
       "linter": "eslint",
+      "tags": "type:app",
       "unitTestRunner": "jest"
     },
     "@nx/nest:library": {

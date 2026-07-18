@@ -27,9 +27,41 @@ export default [
                     ],
                     depConstraints: [
                         {
-                            sourceTag: "*",
+                            sourceTag: "type:app",
                             onlyDependOnLibsWithTags: [
-                                "*"
+                                "type:shared",
+                                "type:validation",
+                                "type:api-client",
+                                "type:ui"
+                            ]
+                        },
+                        {
+                            sourceTag: "type:api-client",
+                            onlyDependOnLibsWithTags: [
+                                "type:shared",
+                                "type:validation",
+                                "type:api-client"
+                            ]
+                        },
+                        {
+                            sourceTag: "type:ui",
+                            onlyDependOnLibsWithTags: [
+                                "type:shared",
+                                "type:validation",
+                                "type:ui"
+                            ]
+                        },
+                        {
+                            sourceTag: "type:validation",
+                            onlyDependOnLibsWithTags: [
+                                "type:shared",
+                                "type:validation"
+                            ]
+                        },
+                        {
+                            sourceTag: "type:shared",
+                            onlyDependOnLibsWithTags: [
+                                "type:shared"
                             ]
                         }
                     ]
