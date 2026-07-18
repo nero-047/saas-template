@@ -1,0 +1,26 @@
+{
+  "name": "@saas-template/api-e2e",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "implicitDependencies": [
+      "@saas-template/api"
+    ],
+    "targets": {
+      "e2e": {
+        "executor": "@nx/jest:jest",
+        "outputs": [
+          "{projectRoot}/test-output/jest/coverage"
+        ],
+        "dependsOn": [
+          "@saas-template/api:build",
+          "@saas-template/api:serve"
+        ],
+        "options": {
+          "jestConfig": "apps/api-e2e/jest.config.cts",
+          "passWithNoTests": true
+        }
+      }
+    }
+  }
+}
