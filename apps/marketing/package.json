@@ -1,0 +1,21 @@
+{
+  "name": "@saas-template/marketing",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "name": "marketing",
+    "tags": [
+      "type:app",
+      "scope:marketing"
+    ]
+  },
+  "dependencies": {
+    "@saas-template/api-client": "*",
+    "@saas-template/shared": "*",
+    "@saas-template/ui": "*",
+    "@saas-template/validation": "*",
+    "next": "~16.2.10",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

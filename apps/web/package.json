@@ -1,0 +1,21 @@
+{
+  "name": "@saas-template/web",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "name": "web",
+    "tags": [
+      "type:app",
+      "scope:web"
+    ]
+  },
+  "dependencies": {
+    "@saas-template/api-client": "*",
+    "@saas-template/shared": "*",
+    "@saas-template/ui": "*",
+    "@saas-template/validation": "*",
+    "next": "~16.2.10",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

@@ -20,6 +20,15 @@
     },
     {
       "path": "./packages/ui"
+    },
+    {
+      "path": "./apps/web"
+    },
+    {
+      "path": "./apps/marketing"
+    },
+    {
+      "path": "./apps/admin"
     }
   ]
 }
