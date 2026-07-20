@@ -10,10 +10,10 @@
     ]
   },
   "dependencies": {
-    "@saas-template/api-client": "*",
-    "@saas-template/shared": "*",
-    "@saas-template/ui": "*",
-    "@saas-template/validation": "*",
+    "@saas-template/api-client": "workspace:*",
+    "@saas-template/shared": "workspace:*",
+    "@saas-template/ui": "workspace:*",
+    "@saas-template/validation": "workspace:*",
     "next": "~16.2.10",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

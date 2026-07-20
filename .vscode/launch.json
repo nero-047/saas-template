@@ -5,8 +5,8 @@
       "type": "node",
       "request": "launch",
       "name": "Debug @saas-template/api with Nx",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["nx", "serve", "@saas-template/api"],
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["exec", "nx", "serve", "@saas-template/api"],
       "env": {
         "NODE_OPTIONS": "--inspect=9229"
       },
@@ -23,8 +23,8 @@
       "type": "node",
       "request": "launch",
       "name": "Debug @saas-template/worker with Nx",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["nx", "serve", "@saas-template/worker"],
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["exec", "nx", "serve", "@saas-template/worker"],
       "env": {
         "NODE_OPTIONS": "--inspect=9230"
       },
