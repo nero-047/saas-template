@@ -3,7 +3,13 @@
   "version": "0.0.0",
   "license": "MIT",
   "packageManager": "pnpm@11.10.0",
-  "scripts": {},
+  "scripts": {
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "db:generate": "nx run db:generate",
+    "db:migrate": "nx run db:migrate",
+    "db:studio": "nx run db:studio"
+  },
   "private": true,
   "dependencies": {
     "@nestjs/common": "^11.0.0",

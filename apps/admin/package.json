@@ -6,6 +6,7 @@
     "name": "admin",
     "tags": [
       "type:app",
+      "platform:browser",
       "scope:admin"
     ]
   },

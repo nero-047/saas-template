@@ -6,6 +6,7 @@
     "name": "marketing",
     "tags": [
       "type:app",
+      "platform:browser",
       "scope:marketing"
     ]
   },

@@ -32,6 +32,16 @@ export default [
                                 "type:shared",
                                 "type:validation",
                                 "type:api-client",
+                                "type:ui",
+                                "type:db"
+                            ]
+                        },
+                        {
+                            sourceTag: "platform:browser",
+                            onlyDependOnLibsWithTags: [
+                                "type:shared",
+                                "type:validation",
+                                "type:api-client",
                                 "type:ui"
                             ]
                         },
@@ -62,6 +72,12 @@ export default [
                             sourceTag: "type:shared",
                             onlyDependOnLibsWithTags: [
                                 "type:shared"
+                            ]
+                        },
+                        {
+                            sourceTag: "type:db",
+                            onlyDependOnLibsWithTags: [
+                                "type:db"
                             ]
                         }
                     ]

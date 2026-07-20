@@ -1,0 +1,65 @@
+{
+  "name": "@saas-template/db",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "browser": false,
+  "engines": {
+    "node": ">=22.13"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@saas-template/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "node": "./dist/index.js",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "nx": {
+    "name": "db",
+    "tags": [
+      "type:db",
+      "platform:node"
+    ],
+    "targets": {
+      "generate": {
+        "cache": false,
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "drizzle-kit generate --config=drizzle.config.ts",
+          "cwd": "packages/db"
+        }
+      },
+      "migrate": {
+        "cache": false,
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "drizzle-kit migrate --config=drizzle.database.config.ts",
+          "cwd": "packages/db"
+        }
+      },
+      "studio": {
+        "cache": false,
+        "continuous": true,
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "drizzle-kit studio --config=drizzle.database.config.ts",
+          "cwd": "packages/db"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "postgres": "^3.4.9",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.10"
+  }
+}

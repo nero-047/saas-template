@@ -6,6 +6,7 @@
     "name": "web",
     "tags": [
       "type:app",
+      "platform:browser",
       "scope:web"
     ]
   },
