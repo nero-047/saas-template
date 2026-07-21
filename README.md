@@ -82,32 +82,37 @@ You can use `pnpm nx list` to get a list of installed plugins. Then, run `pnpm n
 
 [Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
 
-## Set up CI!
+## Continuous integration
 
-### Step 1
+The main CI workflow validates frozen pnpm and uv installs, Nx synchronization,
+TypeScript formatting, applicable lint/typecheck/test/build targets, and offline
+Drizzle generation. Pull requests use Nx affected calculation when Git base and
+head commits are available; pushes to `main` use a safe all-project fallback.
 
-To connect to Nx Cloud, run the following command:
+The separate Docker workflow validates `compose.yaml`, starts and checks
+PostgreSQL and Redis, builds the API and compute images, and exercises compute's
+container health check and HTTP status endpoints. It never pushes images.
 
-```sh
-pnpm nx connect
-```
-
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
-
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
+Before opening a pull request, run:
 
 ```sh
-pnpm nx g ci-workflow
+pnpm install --frozen-lockfile
+uv sync --project apps/compute --frozen
+pnpm nx sync:check
+pnpm exec prettier --check "**/*.{ts,tsx}"
+pnpm nx run-many -t lint typecheck test build --all --skip-nx-cache
+DRIZZLE_OUT="$(mktemp -d)" pnpm nx run db:generate
+git diff --check
 ```
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Docker is required for the complete infrastructure and image checks. Their
+local equivalents start with:
+
+```sh
+docker compose config --quiet
+docker compose up --detach --wait postgres redis
+docker compose down --volumes --remove-orphans
+```
 
 ## Install Nx Console
 
@@ -120,7 +125,7 @@ Nx Console is an editor extension that enriches your developer experience. It le
 Learn more:
 
 - [Learn more about this workspace setup](https://nx.dev/nx-api/node?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- [Learn about Nx affected commands](https://nx.dev/ci/features/affected?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
 - [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
 - [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
 

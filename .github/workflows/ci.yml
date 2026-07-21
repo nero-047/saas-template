@@ -1,0 +1,156 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate monorepo
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      NX_DAEMON: 'false'
+      NX_TASKS_RUNNER_DYNAMIC_OUTPUT: 'false'
+      NX_BASE: ${{ github.event.pull_request.base.sha || '' }}
+      NX_HEAD: ${{ github.event.pull_request.head.sha || '' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+
+      - name: Activate repository pnpm version
+        shell: bash
+        run: |
+          package_manager=$(node -p "require('./package.json').packageManager")
+          if [[ "$package_manager" != pnpm@* ]]; then
+            echo "Expected packageManager to declare pnpm" >&2
+            exit 1
+          fi
+          corepack enable
+          corepack install --global "$package_manager"
+          pnpm --version
+
+      - name: Locate pnpm store
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-${{ runner.arch }}-pnpm-11.10.0-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-pnpm-11.10.0-
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version-file: apps/compute/.python-version
+
+      - name: Read Python version
+        id: python-version
+        shell: bash
+        run: echo "version=$(python -c 'import platform; print(platform.python_version())')" >> "$GITHUB_OUTPUT"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          version: 0.11.21
+          enable-cache: true
+          cache-dependency-glob: apps/compute/uv.lock
+
+      - name: Cache compute virtual environment
+        uses: actions/cache@v6
+        with:
+          path: apps/compute/.venv
+          key: ${{ runner.os }}-${{ runner.arch }}-python-${{ steps.python-version.outputs.version }}-uv-0.11.21-${{ hashFiles('apps/compute/uv.lock') }}
+
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python dependencies
+        run: uv sync --project apps/compute --frozen
+
+      - name: Check Nx synchronization
+        run: pnpm nx sync:check
+
+      - name: Check TypeScript formatting
+        run: pnpm exec prettier --check "**/*.{ts,tsx}"
+
+      - name: Report project target coverage
+        shell: bash
+        run: |
+          node <<'NODE'
+          const { execFileSync } = require('node:child_process');
+
+          const runNx = (...args) => {
+            const output = execFileSync('pnpm', ['nx', ...args], { encoding: 'utf8' });
+            return JSON.parse(output.slice(output.indexOf('{') >= 0 ? output.indexOf('{') : 0));
+          };
+          const projects = JSON.parse(
+            execFileSync('pnpm', ['nx', 'show', 'projects'], { encoding: 'utf8' }),
+          ).sort();
+          const targets = ['lint', 'typecheck', 'test', 'build'];
+
+          for (const project of projects) {
+            const configuration = runNx('show', 'project', project, '--json');
+            const coverage = targets
+              .map((target) => `${target}=${target in configuration.targets ? 'yes' : 'none'}`)
+              .join(' ');
+            console.log(`${project}: ${coverage}`);
+          }
+          NODE
+
+      - name: Run affected or full Nx validation
+        shell: bash
+        run: |
+          targets=(lint typecheck test build)
+          if [[ "${{ github.event_name }}" == "pull_request" ]] \
+            && [[ -n "$NX_BASE" && -n "$NX_HEAD" ]] \
+            && git cat-file -e "$NX_BASE^{commit}" \
+            && git cat-file -e "$NX_HEAD^{commit}"; then
+            echo "Running affected targets from $NX_BASE to $NX_HEAD"
+            pnpm nx affected -t "${targets[@]}" \
+              --base="$NX_BASE" \
+              --head="$NX_HEAD" \
+              --outputStyle=static
+          else
+            echo "Affected SHAs unavailable; running all applicable project targets"
+            pnpm nx run-many -t "${targets[@]}" --all --outputStyle=static
+          fi
+
+      - name: Verify offline Drizzle generation
+        shell: bash
+        run: |
+          export DRIZZLE_OUT="$RUNNER_TEMP/drizzle"
+          pnpm nx run db:generate --outputStyle=static
+          test -d "$DRIZZLE_OUT/meta"
+
+      - name: Verify clean working tree
+        shell: bash
+        run: |
+          git diff --exit-code
+          status=$(git status --porcelain=v1 --untracked-files=all)
+          if [[ -n "$status" ]]; then
+            echo "$status"
+            exit 1
+          fi

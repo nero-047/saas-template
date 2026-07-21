@@ -1,0 +1,173 @@
+name: Docker and infrastructure
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/docker.yml
+      - .node-version
+      - compose.yaml
+      - nx.json
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - apps/api/**
+      - apps/compute/**
+      - packages/**
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/docker.yml
+      - .node-version
+      - compose.yaml
+      - nx.json
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - apps/api/**
+      - apps/compute/**
+      - packages/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  infrastructure:
+    name: Validate Compose services
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+
+      - name: Start PostgreSQL and Redis
+        run: docker compose up --detach --wait --wait-timeout 120 postgres redis
+
+      - name: Verify PostgreSQL readiness
+        run: docker compose exec -T postgres sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+
+      - name: Verify Redis readiness
+        shell: bash
+        run: test "$(docker compose exec -T redis redis-cli ping | tr -d '\r')" = 'PONG'
+
+      - name: Stop infrastructure
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  images:
+    name: Build and validate images
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      NX_DAEMON: 'false'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+
+      - name: Activate repository pnpm version
+        shell: bash
+        run: |
+          package_manager=$(node -p "require('./package.json').packageManager")
+          corepack enable
+          corepack install --global "$package_manager"
+
+      - name: Locate pnpm store
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-${{ runner.arch }}-pnpm-11.10.0-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-pnpm-11.10.0-
+
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prepare API image context
+        run: pnpm nx run @saas-template/api:prune --outputStyle=static
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build API image
+        uses: docker/build-push-action@v7
+        with:
+          context: apps/api
+          file: apps/api/Dockerfile
+          load: true
+          push: false
+          tags: saas-template-api:ci
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      - name: Build compute image
+        uses: docker/build-push-action@v7
+        with:
+          context: apps/compute
+          file: apps/compute/Dockerfile
+          load: true
+          push: false
+          tags: saas-template-compute:ci
+          cache-from: type=gha,scope=compute
+          cache-to: type=gha,mode=max,scope=compute
+
+      - name: Verify non-root runtime users
+        shell: bash
+        run: |
+          for image in saas-template-api:ci saas-template-compute:ci; do
+            user=$(docker image inspect "$image" --format '{{.Config.User}}')
+            echo "$image runtime user: $user"
+            if [[ -z "$user" || "$user" == '0' || "$user" == 'root' || "$user" == 0:* ]]; then
+              echo "$image is configured to run as root" >&2
+              exit 1
+            fi
+          done
+
+      - name: Start compute image
+        run: docker run --detach --name compute-ci --publish 127.0.0.1:18000:8000 saas-template-compute:ci
+
+      - name: Wait for compute health check
+        shell: bash
+        run: |
+          for attempt in {1..60}; do
+            status=$(docker inspect compute-ci --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}')
+            if [[ "$status" == 'healthy' ]]; then
+              exit 0
+            fi
+            if [[ "$status" == 'unhealthy' ]]; then
+              docker logs compute-ci
+              exit 1
+            fi
+            sleep 2
+          done
+          docker logs compute-ci
+          exit 1
+
+      - name: Verify compute endpoints
+        run: |
+          curl --fail --silent --show-error http://127.0.0.1:18000/health | grep --fixed-strings '"status":"healthy"'
+          curl --fail --silent --show-error http://127.0.0.1:18000/ready | grep --fixed-strings '"status":"ready"'
+
+      - name: Stop test containers
+        if: always()
+        run: docker rm --force compute-ci 2>/dev/null || true

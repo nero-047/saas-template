@@ -4,7 +4,7 @@
 #
 # Run the container with `pnpm nx docker:run @saas-template/api -p 3000:3000`.
 #
-FROM docker.io/node:lts-alpine
+FROM docker.io/node:24-alpine
 
 ENV HOST=0.0.0.0
 ENV PORT=3000
@@ -20,5 +20,7 @@ COPY dist .
 RUN corepack enable \
     && corepack install --global pnpm@11.10.0 \
     && pnpm install --prod --frozen-lockfile --force
+
+USER node
 
 CMD [ "node", "main.js" ]

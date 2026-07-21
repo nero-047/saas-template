@@ -68,3 +68,22 @@ imports or private subpaths.
 
 `packages/ui` is a React TypeScript library and must remain independent of
 Next.js so it can be consumed by every frontend application.
+
+## Continuous integration and runtime ownership
+
+GitHub Actions validates both runtime ecosystems without merging their package
+management. Node.js 24, pnpm, and Nx orchestrate the TypeScript applications and
+packages; Python 3.13 and uv own the compute environment. Nx may schedule both,
+but JavaScript/TypeScript source must not import Python source and Python source
+must not import workspace TypeScript packages.
+
+`pnpm-lock.yaml` is the sole dependency lockfile for JavaScript and TypeScript.
+`apps/compute/uv.lock` is the sole Python dependency lockfile. CI uses frozen
+installs and fails if validation changes either lockfile or leaves generated
+repository files behind.
+
+The main CI workflow owns source formatting, synchronization, linting,
+type-checking, tests, builds, and offline Drizzle schema generation. The Docker
+workflow owns Compose validation, PostgreSQL/Redis readiness, image builds,
+runtime-user inspection, and compute container health verification. Neither
+workflow deploys or publishes artifacts.
