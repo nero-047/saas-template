@@ -30,6 +30,14 @@ These targets are either [inferred automatically](https://nx.dev/concepts/inferr
 
 [More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
 
+### API health endpoints
+
+The API exposes `GET /health` as a process-only liveness check. It returns
+`{"status":"ok"}` without contacting external services, so it remains available
+when PostgreSQL is down. `GET /ready` is the traffic-readiness check: it probes
+PostgreSQL with a lightweight query and returns HTTP 503 with a safe status body
+when the database is unavailable.
+
 ## Python compute service
 
 `apps/compute` is the Python 3.13 runtime for specialised processing workloads.
@@ -90,8 +98,8 @@ Drizzle generation. Pull requests use Nx affected calculation when Git base and
 head commits are available; pushes to `main` use a safe all-project fallback.
 
 The separate Docker workflow validates `compose.yaml`, starts and checks
-PostgreSQL and Redis, builds the API and compute images, and exercises compute's
-container health check and HTTP status endpoints. It never pushes images.
+PostgreSQL and Redis, builds the API and compute images, and exercises both
+containers' health checks and liveness endpoints. It never pushes images.
 
 Before opening a pull request, run:
 

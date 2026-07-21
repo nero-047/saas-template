@@ -23,7 +23,9 @@ does not import TypeScript workspace packages.
 ## Service responsibilities
 
 The NestJS API owns authentication, authorization, CRUD, transactional business
-logic, public APIs, and WebSockets.
+logic, public APIs, and WebSockets. Its `/health` endpoint reports process
+liveness without external checks; `/ready` reports traffic readiness by probing
+the mandatory PostgreSQL dependency only when requested.
 
 The NestJS worker owns queues, notifications, scheduled business jobs, webhook
 delivery, and background domain processing.
@@ -85,5 +87,5 @@ repository files behind.
 The main CI workflow owns source formatting, synchronization, linting,
 type-checking, tests, builds, and offline Drizzle schema generation. The Docker
 workflow owns Compose validation, PostgreSQL/Redis readiness, image builds,
-runtime-user inspection, and compute container health verification. Neither
+runtime-user inspection, and API/compute container health verification. Neither
 workflow deploys or publishes artifacts.
