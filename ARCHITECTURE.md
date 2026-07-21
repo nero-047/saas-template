@@ -15,6 +15,50 @@ src/
 Only `app/` exists initially because Git does not track empty directories.
 Create `features/` and `shared/` when they contain real code.
 
+The NestJS applications live in `apps/api` and `apps/worker`. The Python
+specialised-processing service lives in `apps/compute` and is managed with uv.
+It is represented as an Nx application but is not a pnpm workspace package and
+does not import TypeScript workspace packages.
+
+## Service responsibilities
+
+The NestJS API owns authentication, authorization, CRUD, transactional business
+logic, public APIs, and WebSockets.
+
+The NestJS worker owns queues, notifications, scheduled business jobs, webhook
+delivery, and background domain processing.
+
+Python compute owns AI/ML, OCR, document processing, analytics, forecasting,
+scientific workloads, data transformation, image processing, and other
+Python-specialised or CPU/GPU-heavy processing. The foundation does not install
+those capability libraries until a real workload requires them.
+
+## Compute structure
+
+The `saas_compute` import package keeps HTTP routes in `api/`, configuration and
+cross-cutting runtime concerns in `core/`, and future processing capabilities in
+cohesive modules under `modules/`. The `modules/` directory remains absent until
+there is real implementation to track. Routes should validate and translate
+HTTP requests while processing logic remains in capability modules.
+
+Configuration is typed and environment-based. Importing the base package does
+not read environment variables; settings are loaded when the ASGI application
+is created to start the service.
+
+## Service interaction patterns
+
+Synchronous compute work can eventually use an internal HTTP request from the
+NestJS API to compute when the operation is short enough to fit the API request
+lifecycle. The API remains responsible for public contracts, authorization,
+transactional decisions, and translating the compute result for clients.
+
+Long-running work can eventually use an asynchronous workflow coordinated by
+the NestJS worker. The worker remains responsible for scheduling, retries,
+domain state transitions, notifications, and delivery; compute performs the
+specialised processing and returns a result or failure. No additional queue,
+shared Python/TypeScript schema, gRPC transport, or interaction endpoint is
+introduced by this foundation.
+
 ## Package imports
 
 Applications and packages must import workspace packages through their public

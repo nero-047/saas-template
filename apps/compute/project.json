@@ -1,0 +1,55 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "compute",
+  "projectType": "application",
+  "sourceRoot": "apps/compute/src",
+  "tags": ["type:app", "scope:compute", "platform:python"],
+  "targets": {
+    "dev": {
+      "continuous": true,
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run uvicorn saas_compute.main:app --reload --host 0.0.0.0 --port 8000",
+        "cwd": "apps/compute"
+      }
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run uvicorn saas_compute.main:app --host 0.0.0.0 --port 8000",
+        "cwd": "apps/compute"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run pytest",
+        "cwd": "apps/compute"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["uv run ruff format --check .", "uv run ruff check ."],
+        "cwd": "apps/compute",
+        "parallel": false
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run pyright",
+        "cwd": "apps/compute"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/apps/compute"],
+      "options": {
+        "command": "uv build --no-sources --out-dir ../../dist/apps/compute",
+        "cwd": "apps/compute"
+      }
+    }
+  }
+}

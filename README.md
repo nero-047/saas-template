@@ -30,6 +30,36 @@ These targets are either [inferred automatically](https://nx.dev/concepts/inferr
 
 [More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
 
+## Python compute service
+
+`apps/compute` is the Python 3.13 runtime for specialised processing workloads.
+It uses [uv](https://docs.astral.sh/uv/) for its project environment and
+dependencies; it is an Nx application, not a pnpm workspace package.
+
+Install its locked Python dependencies from the repository root:
+
+```sh
+uv sync --project apps/compute --frozen
+```
+
+Run the local service through Nx:
+
+```sh
+pnpm nx run compute:dev
+```
+
+The service listens at `http://127.0.0.1:8000` and currently exposes only
+`GET /health` and `GET /ready`.
+
+Run its verification targets with:
+
+```sh
+pnpm nx run compute:lint
+pnpm nx run compute:typecheck
+pnpm nx run compute:test
+pnpm nx run compute:build
+```
+
 ## Add new projects
 
 While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
