@@ -1,0 +1,35 @@
+{
+  "name": "@saas-template/contracts",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "nx": {
+    "name": "contracts",
+    "tags": [
+      "type:package",
+      "scope:contracts",
+      "platform:neutral"
+    ],
+    "targets": {
+      "lint": {
+        "executor": "nx:run-commands",
+        "cache": true,
+        "options": {
+          "command": "prettier --check openapi/openapi.yaml generators/README.md README.md package.json scripts/validate-openapi.mjs",
+          "cwd": "packages/contracts"
+        }
+      },
+      "typecheck": {
+        "executor": "nx:run-commands",
+        "cache": true,
+        "options": {
+          "command": "node scripts/validate-openapi.mjs",
+          "cwd": "packages/contracts"
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "yaml": "^2.9.0"
+  }
+}

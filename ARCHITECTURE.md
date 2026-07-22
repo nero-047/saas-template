@@ -45,6 +45,19 @@ scientific workloads, data transformation, image processing, and other
 Python-specialised or CPU/GPU-heavy processing. The foundation does not install
 those capability libraries until a real workload requires them.
 
+## API contract ownership
+
+The NestJS API owns business logic, authorization decisions, HTTP endpoint
+implementation, and runtime behavior. `packages/contracts` owns the
+language-neutral OpenAPI definition of that public HTTP surface; it does not own
+framework code, persistence, or business implementation.
+
+Clients consume generated contracts rather than redefining request and response
+shapes by hand. Future TypeScript output will serve web, admin, and React Native;
+Dart output will serve Flutter; Python output may serve compute when its API
+boundary needs shared schemas. No generators or generated clients are included
+in the current foundation.
+
 ## Compute structure
 
 The `saas_compute` import package keeps HTTP routes in `api/`, configuration and

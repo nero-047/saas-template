@@ -369,6 +369,12 @@ importers:
         specifier: ^2.3.0
         version: 2.8.1
 
+  packages/contracts:
+    devDependencies:
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
+
   packages/db:
     dependencies:
       drizzle-orm:

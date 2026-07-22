@@ -1,0 +1,8 @@
+openapi: 3.1.1
+info:
+  title: SaaS Template API
+  version: 0.0.0
+  description: Language-neutral HTTP API contract for the SaaS template.
+paths: {}
+components:
+  schemas: {}
