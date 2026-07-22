@@ -6,6 +6,7 @@
   "scripts": {
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down",
+    "db:check": "nx run db:check",
     "db:generate": "nx run db:generate",
     "db:migrate": "nx run db:migrate",
     "db:seed": "nx run db:seed",

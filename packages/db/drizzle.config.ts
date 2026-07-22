@@ -1,6 +1,7 @@
 import { defineConfig } from 'drizzle-kit';
 
-const migrationOutput = process.env.DRIZZLE_OUT?.trim() || './drizzle';
+const migrationOutput =
+  process.env.DRIZZLE_OUT?.trim() || './drizzle/migrations';
 
 export default defineConfig({
   dialect: 'postgresql',

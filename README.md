@@ -30,19 +30,27 @@ These targets are either [inferred automatically](https://nx.dev/concepts/inferr
 
 [More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
 
-### Database catalogue seed
+### Database migrations and catalogue seed
 
-After the database schema exists, seed or reconcile the platform RBAC
-catalogue with:
+Database structure and initial platform data are separate responsibilities:
 
 ```sh
+pnpm db:check
+pnpm db:generate -- --name=<descriptive_name>
+pnpm db:migrate
 pnpm db:seed
+pnpm db:studio
 ```
 
-The command requires `DATABASE_URL`. It is safe to repeat: permission and role
-keys are upserted, platform grants are reconciled, and future permissions from
-other namespaces are left intact. New organizations receive the same default
-roles and grants atomically during registration.
+`db:check` validates the checked-in migration journal. `db:generate` compares
+the TypeScript schema with the checked-in Drizzle
+snapshots and creates a reviewable migration without connecting to PostgreSQL.
+`db:migrate` applies structural changes. `db:seed` then upserts the permission
+catalogue and the Owner, Admin, and Member grants; it is safe to repeat and
+preserves permissions from future namespaces. `db:migrate`, `db:seed`, and
+`db:studio` require `DATABASE_URL`, while builds, linting, and migration
+generation do not. New organizations receive the same default roles and grants
+atomically during registration.
 
 ### API health endpoints
 
@@ -207,8 +215,11 @@ You can use `pnpm nx list` to get a list of installed plugins. Then, run `pnpm n
 
 The main CI workflow validates frozen pnpm and uv installs, Nx synchronization,
 TypeScript formatting, applicable lint/typecheck/test/build targets, and offline
-Drizzle generation. Pull requests use Nx affected calculation when Git base and
-head commits are available; pushes to `main` use a safe all-project fallback.
+Drizzle generation. An isolated PostgreSQL CI job applies the checked-in
+migrations, seeds a temporary organization twice, and verifies the resulting
+catalogue and grants. Pull requests use Nx affected calculation when Git base
+and head commits are available; pushes to `main` use a safe all-project
+fallback.
 
 The separate mobile workflow runs source checks and a Linux-compatible iOS
 project configuration validation, then builds Android in an isolated job with
@@ -233,6 +244,7 @@ uv sync --project apps/compute --frozen
 pnpm nx sync:check
 pnpm exec prettier --check "**/*.{ts,tsx}"
 pnpm nx run-many -t lint typecheck test build --all --skip-nx-cache
+pnpm db:check
 DRIZZLE_OUT="$(mktemp -d)" pnpm nx run db:generate
 git diff --check
 ```

@@ -27,6 +27,14 @@
       "platform:node"
     ],
     "targets": {
+      "check": {
+        "cache": true,
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "drizzle-kit check --config=drizzle.config.ts",
+          "cwd": "packages/db"
+        }
+      },
       "generate": {
         "cache": false,
         "executor": "nx:run-commands",

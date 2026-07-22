@@ -142,6 +142,7 @@ jobs:
       - name: Verify offline Drizzle generation
         shell: bash
         run: |
+          pnpm db:check
           export DRIZZLE_OUT="$RUNNER_TEMP/drizzle"
           pnpm nx run db:generate --outputStyle=static
           test -d "$DRIZZLE_OUT/meta"
@@ -155,3 +156,112 @@ jobs:
             echo "$status"
             exit 1
           fi
+
+  database:
+    name: Validate migrations and seed
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+      NX_DAEMON: 'false'
+      DATABASE_URL: postgresql://saas_template:ci_only_password@127.0.0.1:5432/saas_template
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: saas_template
+          POSTGRES_USER: saas_template
+          POSTGRES_PASSWORD: ci_only_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saas_template -d saas_template"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+
+      - name: Activate repository pnpm version
+        shell: bash
+        run: |
+          package_manager=$(node -p "require('./package.json').packageManager")
+          if [[ "$package_manager" != pnpm@* ]]; then
+            echo "Expected packageManager to declare pnpm" >&2
+            exit 1
+          fi
+          corepack enable
+          corepack install --global "$package_manager"
+
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply database migrations
+        run: pnpm db:migrate
+
+      - name: Create isolated seed organization
+        run: |
+          pnpm --filter @saas-template/db exec node --input-type=module <<'NODE'
+          import postgres from 'postgres';
+
+          const sql = postgres(process.env.DATABASE_URL, { max: 1 });
+          await sql`
+            insert into organizations (id, name, slug)
+            values (
+              '00000000-0000-4000-8000-000000000001',
+              'CI Seed Organization',
+              'ci-seed-organization'
+            )
+          `;
+          await sql.end();
+          NODE
+
+      - name: Seed twice and verify idempotency
+        shell: bash
+        run: |
+          pnpm db:seed
+          pnpm db:seed
+          pnpm --filter @saas-template/db exec node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import postgres from 'postgres';
+
+          const organizationId = '00000000-0000-4000-8000-000000000001';
+          const sql = postgres(process.env.DATABASE_URL, { max: 1 });
+          const [permissionCount] = await sql`
+            select count(*)::int as count from permissions
+          `;
+          const roleCounts = await sql`
+            select roles.key, count(role_permissions.permission_id)::int as count
+            from roles
+            left join role_permissions on role_permissions.role_id = roles.id
+            where roles.organization_id = ${organizationId}
+            group by roles.key
+            order by roles.key
+          `;
+          const duplicatePermissions = await sql`
+            select key from permissions group by key having count(*) > 1
+          `;
+          const duplicateRoles = await sql`
+            select organization_id, key
+            from roles
+            group by organization_id, key
+            having count(*) > 1
+          `;
+
+          assert.equal(permissionCount.count, 17);
+          assert.deepEqual(
+            Object.fromEntries(roleCounts.map(({ key, count }) => [key, count])),
+            { admin: 16, member: 5, owner: 17 },
+          );
+          assert.equal(duplicatePermissions.length, 0);
+          assert.equal(duplicateRoles.length, 0);
+          await sql.end();
+          NODE

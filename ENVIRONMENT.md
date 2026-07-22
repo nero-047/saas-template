@@ -31,6 +31,13 @@ it is not an application runtime setting. `NODE_ENV`, `PORT`, `HOSTNAME`, and
 telemetry controls present in container definitions are operational process
 settings rather than product configuration.
 
+`pnpm db:check` and `pnpm db:generate` read only the checked-in TypeScript
+schema and Drizzle metadata, so they do not require `DATABASE_URL`.
+`pnpm db:migrate`, `pnpm db:seed`, and `pnpm db:studio` connect to PostgreSQL
+and require `DATABASE_URL` when their command starts. They do not cause
+application builds, linting, type-checking, or package imports to read database
+configuration.
+
 There are currently no browser-exposed variables. A future Next.js variable
 must use `NEXT_PUBLIC_` only when its value is deliberately public. Such values
 are embedded into browser bundles during `next build`; changing the container's

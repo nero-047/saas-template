@@ -173,6 +173,14 @@ access. Future feature modules must introduce permission keys under their own
 stable namespace and extend grants explicitly instead of relying on an implicit
 role hierarchy.
 
+Checked-in Drizzle migrations are the ordered history of database structure.
+The initial migration creates only the nine identity and platform tables and
+their constraints; it contains no application data. Migration application and
+RBAC seeding remain separate operations: `db:migrate` advances structure, then
+the repeatable `db:seed` reconciles platform permissions, system roles, and
+explicit grants. This separation keeps migrations immutable and makes seed
+data safe to reapply in each environment.
+
 The platform contract reserves `X-Organization-Id` and `X-Workspace-Id` for
 tenant selection and `X-Request-Id` for correlation. Platform HTTP operations
 are versioned under `/api/v1`; process health routes remain unversioned.
