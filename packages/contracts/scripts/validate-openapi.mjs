@@ -47,6 +47,7 @@ if (
 }
 
 const requiredOperations = {
+  '/auth/register': 'post',
   '/auth/login': 'post',
   '/auth/logout': 'post',
   '/users/me': 'get',
@@ -63,6 +64,10 @@ for (const [path, method] of Object.entries(requiredOperations)) {
 }
 
 const requiredSchemas = [
+  'RegisterRequest',
+  'LoginRequest',
+  'AuthResponse',
+  'CurrentUserResponse',
   'User',
   'Organization',
   'Workspace',

@@ -1,10 +1,16 @@
 export {
+  authResponseSchema,
+  currentUserResponseSchema,
   loginRequestSchema,
   organizationContextSchema,
   paginationQuerySchema,
+  registerRequestSchema,
   workspaceContextSchema,
+  type AuthResponse,
+  type CurrentUserResponse,
   type LoginRequest,
   type OrganizationContextInput,
   type PaginationQuery,
+  type RegisterRequest,
   type WorkspaceContextInput,
 } from './identity.js';

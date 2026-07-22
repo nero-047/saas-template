@@ -14,6 +14,38 @@ tags:
   - name: Organizations
   - name: Workspaces
 paths:
+  /auth/register:
+    post:
+      operationId: register
+      summary: Create an owner account, organization, and opaque session
+      tags: [Authentication]
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Account and session established
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Set-Cookie:
+              description: HttpOnly opaque session cookie; attributes are controlled by the API.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
   /auth/login:
     post:
       operationId: login
@@ -41,7 +73,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
+                $ref: '#/components/schemas/AuthResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -57,10 +89,14 @@ paths:
         - $ref: '#/components/parameters/RequestId'
       responses:
         '204':
-          description: Session revoked
+          description: Session revoked and the session cookie expired
           headers:
             X-Request-Id:
               $ref: '#/components/headers/RequestId'
+            Set-Cookie:
+              description: Expired HttpOnly session cookie.
+              schema:
+                type: string
         '401':
           $ref: '#/components/responses/Unauthorized'
   /users/me:
@@ -81,7 +117,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/CurrentUserResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
   /organizations/current:
@@ -143,7 +179,9 @@ components:
       type: apiKey
       in: cookie
       name: session
-      description: Opaque session credential managed by the API.
+      description: >-
+        Opaque HttpOnly session credential managed by the API. Secure and
+        SameSite attributes are deployment-configured; only its hash is stored.
   parameters:
     RequestId:
       name: X-Request-Id
@@ -213,7 +251,30 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: The requested identity conflicts with an existing record
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
   schemas:
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 320
+        password:
+          type: string
+          format: password
+          minLength: 12
+          maxLength: 1024
     LoginRequest:
       type: object
       additionalProperties: false
@@ -226,21 +287,29 @@ components:
         password:
           type: string
           format: password
-          minLength: 1
+          minLength: 12
           maxLength: 1024
-    LoginResponse:
+    AuthResponse:
       type: object
       additionalProperties: false
       required: [user, session]
       properties:
         user:
-          $ref: '#/components/schemas/User'
+          $ref: '#/components/schemas/CurrentUserResponse'
         session:
-          $ref: '#/components/schemas/Session'
+          type: object
+          additionalProperties: false
+          required: [expiresAt]
+          properties:
+            expiresAt:
+              type: string
+              format: date-time
+    CurrentUserResponse:
+      $ref: '#/components/schemas/User'
     User:
       type: object
       additionalProperties: false
-      required: [id, email, displayName, createdAt, updatedAt]
+      required: [id, email, displayName, emailVerifiedAt, createdAt, updatedAt]
       properties:
         id:
           type: string
@@ -250,6 +319,9 @@ components:
           format: email
         displayName:
           type: string
+        emailVerifiedAt:
+          type: [string, 'null']
+          format: date-time
         createdAt:
           type: string
           format: date-time

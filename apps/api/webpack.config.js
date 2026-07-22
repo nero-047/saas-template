@@ -15,11 +15,18 @@ module.exports = {
       compiler: 'tsc',
       main: './src/main.ts',
       tsConfig: './tsconfig.app.json',
-      assets: ["./src/assets"],
+      assets: [
+        './src/assets',
+        {
+          input: '../../',
+          glob: 'pnpm-workspace.yaml',
+          output: '.',
+        },
+      ],
       optimization: false,
       outputHashing: 'none',
       generatePackageJson: false,
       sourceMap: true,
-    })
+    }),
   ],
 };

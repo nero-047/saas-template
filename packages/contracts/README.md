@@ -7,9 +7,10 @@ frameworks and database models do not define cross-language contracts.
 The NestJS API implements the operations defined here while retaining ownership
 of business logic, authorization decisions, and runtime behavior.
 
-The initial platform contract defines session authentication and current user,
-organization, and workspace operations. CRM, billing, and product-specific
-resources remain absent.
+The initial platform contract defines email/password registration and login,
+opaque cookie sessions, and current user, organization, and workspace
+operations. Raw session credentials and password hashes never appear in the
+contract. CRM, billing, and product-specific resources remain absent.
 
 Major API versions are encoded in the server base path, beginning with `/api/v1`.
 Clients may send `X-Request-Id`; every documented response returns the accepted

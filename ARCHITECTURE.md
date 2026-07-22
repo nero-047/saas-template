@@ -86,10 +86,22 @@ controller code.
 
 ## Authentication and authorization
 
-Opaque sessions authenticate users; only hashes of session credentials are
-stored. The current API foundation resolves existing active sessions and can
-revoke them, but intentionally does not issue credentials, hash passwords, or
-implement complete login, OAuth, or JWT flows yet.
+Email/password registration creates the user, initial organization,
+organization-level membership, owner role assignment, and first session in one
+database transaction. Passwords use Argon2id and the database stores only the
+encoded password hash. Email lookup uses a separately normalized, uniquely
+indexed value while preserving the user's display form.
+
+Authentication uses random 256-bit opaque session credentials rather than
+JWTs. Only SHA-256 token hashes are stored; active-session lookup verifies the
+expiration and revocation timestamps and records last use. The raw credential
+is transported in an HttpOnly, host-only cookie whose Secure, SameSite, and
+expiration settings are application runtime configuration. Logout revokes the
+server-side session and expires the browser cookie.
+
+OAuth, SSO, MFA, recovery, and other credential methods can later establish the
+same current-user/session abstraction without changing tenant or permission
+resolution. They are intentionally absent from this minimal runtime.
 
 Request context is resolved in stages: current user, organization membership,
 then optional workspace membership. Controllers added later should translate

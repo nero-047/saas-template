@@ -6,7 +6,8 @@
 #
 FROM docker.io/node:24-alpine
 
-ENV PORT=3000
+ENV NODE_ENV=production \
+    PORT=3000
 
 
 WORKDIR /app

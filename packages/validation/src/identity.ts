@@ -1,8 +1,29 @@
 import { z } from 'zod';
 
-export const loginRequestSchema = z.object({
-  email: z.string().trim().toLowerCase().email().max(320),
-  password: z.string().min(1).max(1024),
+const emailSchema = z.string().trim().email().max(320);
+const passwordSchema = z.string().min(12).max(1024);
+
+export const registerRequestSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+});
+
+export const loginRequestSchema = registerRequestSchema;
+
+export const currentUserResponseSchema = z.object({
+  id: z.string().uuid(),
+  email: emailSchema,
+  displayName: z.string().min(1).max(200),
+  emailVerifiedAt: z.iso.datetime().nullable(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+export const authResponseSchema = z.object({
+  user: currentUserResponseSchema,
+  session: z.object({
+    expiresAt: z.iso.datetime(),
+  }),
 });
 
 export const organizationContextSchema = z.object({
@@ -19,6 +40,9 @@ export const paginationQuerySchema = z.object({
 });
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
+export type RegisterRequest = z.infer<typeof registerRequestSchema>;
+export type AuthResponse = z.infer<typeof authResponseSchema>;
+export type CurrentUserResponse = z.infer<typeof currentUserResponseSchema>;
 export type OrganizationContextInput = z.infer<
   typeof organizationContextSchema
 >;

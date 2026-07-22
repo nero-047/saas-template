@@ -3,14 +3,39 @@ import { and, eq, gt, isNull, sessions } from '@saas-template/db';
 
 import { DatabaseService } from '../database/database.service';
 
+export interface CreateSessionRecord {
+  readonly userId: string;
+  readonly tokenHash: string;
+  readonly expiresAt: Date;
+  readonly now: Date;
+}
+
 @Injectable()
 export class SessionsRepository {
   constructor(private readonly database: DatabaseService) {}
 
-  async findActiveByTokenHash(tokenHash: string, now: Date) {
+  async create(input: CreateSessionRecord) {
     const [session] = await this.database.db
-      .select()
-      .from(sessions)
+      .insert(sessions)
+      .values({
+        userId: input.userId,
+        tokenHash: input.tokenHash,
+        expiresAt: input.expiresAt,
+        lastUsedAt: input.now,
+        createdAt: input.now,
+        updatedAt: input.now,
+      })
+      .returning();
+    if (!session) {
+      throw new Error('Session insertion did not return a row.');
+    }
+    return session;
+  }
+
+  async findActiveAndTouch(tokenHash: string, now: Date) {
+    const [session] = await this.database.db
+      .update(sessions)
+      .set({ lastUsedAt: now, updatedAt: now })
       .where(
         and(
           eq(sessions.tokenHash, tokenHash),
@@ -18,8 +43,7 @@ export class SessionsRepository {
           isNull(sessions.revokedAt),
         ),
       )
-      .limit(1);
-
+      .returning();
     return session;
   }
 

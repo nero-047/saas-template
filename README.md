@@ -38,6 +38,13 @@ when PostgreSQL is down. `GET /ready` is the traffic-readiness check: it probes
 PostgreSQL with a lightweight query and returns HTTP 503 with a safe status body
 when the database is unavailable.
 
+The initial identity runtime exposes email/password registration and login at
+`/api/v1/auth/register` and `/api/v1/auth/login`. Both establish an opaque
+HttpOnly session cookie; `/api/v1/auth/logout` revokes it and
+`/api/v1/users/me` returns the authenticated user. PostgreSQL must be available
+for these identity operations, but remains unnecessary for builds and
+`/health`.
+
 ## Environment setup
 
 Environment configuration is intentionally application-owned. For local
