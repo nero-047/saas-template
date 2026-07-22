@@ -5,6 +5,7 @@ import { PermissionsService } from './permissions.service';
 
 describe('PermissionsService', () => {
   const repository = {
+    findByKey: jest.fn(),
     findKeysForMembership: jest.fn<Promise<string[]>, [string]>(),
   };
   const service = new PermissionsService(
@@ -13,7 +14,33 @@ describe('PermissionsService', () => {
   const context = { membershipId: 'membership-id' };
 
   beforeEach(() => {
+    repository.findByKey.mockReset();
     repository.findKeysForMembership.mockReset();
+  });
+
+  it('resolves catalogue entries by their exact permission key', async () => {
+    const permission = { id: 'permission-id', key: 'workspace.read' };
+    repository.findByKey.mockResolvedValue(permission);
+
+    await expect(service.resolveByKey(' workspace.read ')).resolves.toBe(
+      permission,
+    );
+    expect(repository.findByKey).toHaveBeenCalledWith('workspace.read');
+  });
+
+  it('fails closed when a permission key is absent from the catalogue', async () => {
+    repository.findByKey.mockResolvedValue(undefined);
+
+    await expect(
+      service.canKnownPermission(
+        { permissions: ['unknown.permission'] },
+        'unknown.permission',
+      ),
+    ).resolves.toBe(false);
+    await expect(
+      service.canKnownPermission({ permissions: ['workspace.read'] }, '   '),
+    ).resolves.toBe(false);
+    expect(repository.findByKey).toHaveBeenCalledTimes(1);
   });
 
   it('allows an explicitly granted permission', async () => {

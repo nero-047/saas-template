@@ -43,6 +43,17 @@
           "cwd": "packages/db"
         }
       },
+      "seed": {
+        "cache": false,
+        "dependsOn": [
+          "build"
+        ],
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node dist/seed.js",
+          "cwd": "packages/db"
+        }
+      },
       "studio": {
         "cache": false,
         "continuous": true,

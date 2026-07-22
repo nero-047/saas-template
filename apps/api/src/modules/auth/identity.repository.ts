@@ -4,7 +4,7 @@ import {
   membershipRoles,
   memberships,
   organizations,
-  roles,
+  seedOrganizationRbac,
   sessions,
   users,
 } from '@saas-template/db';
@@ -99,21 +99,12 @@ export class IdentityRepository {
           throw new Error('Membership insertion did not return a row.');
         }
 
-        const [ownerRole] = await transaction
-          .insert(roles)
-          .values({
-            organizationId: organization.id,
-            key: 'owner',
-            name: 'Owner',
-            description: 'Organization owner',
-            isSystem: true,
-            createdAt: input.now,
-            updatedAt: input.now,
-          })
-          .returning();
-        if (!ownerRole) {
-          throw new Error('Owner role insertion did not return a row.');
-        }
+        const { roles: seededRoles } = await seedOrganizationRbac(
+          transaction,
+          organization.id,
+          input.now,
+        );
+        const ownerRole = seededRoles.owner;
 
         await transaction.insert(membershipRoles).values({
           membershipId: membership.id,

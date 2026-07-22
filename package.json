@@ -8,6 +8,7 @@
     "infra:down": "docker compose down",
     "db:generate": "nx run db:generate",
     "db:migrate": "nx run db:migrate",
+    "db:seed": "nx run db:seed",
     "db:studio": "nx run db:studio"
   },
   "private": true,

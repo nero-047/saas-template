@@ -157,6 +157,22 @@ organization. Permission checks deny by default and require an explicit key.
 `PermissionsService.can(context, key)` checks already-resolved permissions
 without another database query; `assertCan` and `PermissionGuard` reject
 missing or incomplete grants.
+
+The database package owns a deterministic platform RBAC catalogue. Its seed
+upserts the global permission keys and the `Owner`, `Admin`, and `Member` system
+roles for every organization, then reconciles only this catalogue's grants.
+Running it repeatedly does not duplicate records, and permissions outside the
+platform catalogue are preserved. Registration applies the same seed inside
+the user and organization transaction before assigning the new membership to
+`Owner`, so the first owner receives every platform grant atomically.
+
+Roles do not inherit from one another. Every role-to-permission relationship is
+an explicit grant: `Owner` has the complete platform catalogue, `Admin` omits
+ownership-sensitive organization management, and `Member` has basic read
+access. Future feature modules must introduce permission keys under their own
+stable namespace and extend grants explicitly instead of relying on an implicit
+role hierarchy.
+
 The platform contract reserves `X-Organization-Id` and `X-Workspace-Id` for
 tenant selection and `X-Request-Id` for correlation. Platform HTTP operations
 are versioned under `/api/v1`; process health routes remain unversioned.

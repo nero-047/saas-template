@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
+import type { Permission } from '@saas-template/db';
 
 import { PermissionsRepository } from './permissions.repository';
 
@@ -18,6 +19,22 @@ export class PermissionsService {
     return [
       ...new Set(await this.permissions.findKeysForMembership(membershipId)),
     ];
+  }
+
+  async resolveByKey(key: string): Promise<Permission | undefined> {
+    const normalizedKey = key.trim();
+    if (!normalizedKey) {
+      return undefined;
+    }
+    return this.permissions.findByKey(normalizedKey);
+  }
+
+  async canKnownPermission(
+    subject: PermissionSubject | undefined,
+    requiredPermission: string,
+  ): Promise<boolean> {
+    const permission = await this.resolveByKey(requiredPermission);
+    return permission ? this.can(subject, permission.key) : false;
   }
 
   can(

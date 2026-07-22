@@ -30,6 +30,20 @@ These targets are either [inferred automatically](https://nx.dev/concepts/inferr
 
 [More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
 
+### Database catalogue seed
+
+After the database schema exists, seed or reconcile the platform RBAC
+catalogue with:
+
+```sh
+pnpm db:seed
+```
+
+The command requires `DATABASE_URL`. It is safe to repeat: permission and role
+keys are upserted, platform grants are reconciled, and future permissions from
+other namespaces are left intact. New organizations receive the same default
+roles and grants atomically during registration.
+
 ### API health endpoints
 
 The API exposes `GET /health` as a process-only liveness check. It returns
