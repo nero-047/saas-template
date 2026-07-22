@@ -11,6 +11,10 @@ on:
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - apps/api/**
+      - apps/worker/**
+      - apps/web/**
+      - apps/marketing/**
+      - apps/admin/**
       - apps/compute/**
       - packages/**
   push:
@@ -25,6 +29,10 @@ on:
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - apps/api/**
+      - apps/worker/**
+      - apps/web/**
+      - apps/marketing/**
+      - apps/admin/**
       - apps/compute/**
       - packages/**
   workflow_dispatch:
@@ -66,7 +74,7 @@ jobs:
   images:
     name: Build and validate images
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     env:
       CI: 'true'
       NX_DAEMON: 'false'
@@ -106,6 +114,9 @@ jobs:
       - name: Prepare API image context
         run: pnpm nx run @saas-template/api:prune --outputStyle=static
 
+      - name: Prepare worker image context
+        run: pnpm nx run @saas-template/worker:prune --outputStyle=static
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -119,6 +130,50 @@ jobs:
           tags: saas-template-api:ci
           cache-from: type=gha,scope=api
           cache-to: type=gha,mode=max,scope=api
+
+      - name: Build worker image
+        uses: docker/build-push-action@v7
+        with:
+          context: apps/worker
+          file: apps/worker/Dockerfile
+          load: true
+          push: false
+          tags: saas-template-worker:ci
+          cache-from: type=gha,scope=worker
+          cache-to: type=gha,mode=max,scope=worker
+
+      - name: Build web image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          load: true
+          push: false
+          tags: saas-template-web:ci
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
+      - name: Build marketing image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/marketing/Dockerfile
+          load: true
+          push: false
+          tags: saas-template-marketing:ci
+          cache-from: type=gha,scope=marketing
+          cache-to: type=gha,mode=max,scope=marketing
+
+      - name: Build admin image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/admin/Dockerfile
+          load: true
+          push: false
+          tags: saas-template-admin:ci
+          cache-from: type=gha,scope=admin
+          cache-to: type=gha,mode=max,scope=admin
 
       - name: Build compute image
         uses: docker/build-push-action@v7
@@ -134,7 +189,15 @@ jobs:
       - name: Verify non-root runtime users
         shell: bash
         run: |
-          for image in saas-template-api:ci saas-template-compute:ci; do
+          images=(
+            saas-template-api:ci
+            saas-template-worker:ci
+            saas-template-web:ci
+            saas-template-marketing:ci
+            saas-template-admin:ci
+            saas-template-compute:ci
+          )
+          for image in "${images[@]}"; do
             user=$(docker image inspect "$image" --format '{{.Config.User}}')
             echo "$image runtime user: $user"
             if [[ -z "$user" || "$user" == '0' || "$user" == 'root' || "$user" == 0:* ]]; then
@@ -142,6 +205,13 @@ jobs:
               exit 1
             fi
           done
+
+      - name: Verify worker runtime contract
+        shell: bash
+        run: |
+          test "$(docker image inspect saas-template-worker:ci --format '{{json .Config.Cmd}}')" = '["node","main.js"]'
+          test "$(docker image inspect saas-template-worker:ci --format '{{json .Config.ExposedPorts}}')" = 'null'
+          test "$(docker image inspect saas-template-worker:ci --format '{{json .Config.Healthcheck}}')" = 'null'
 
       - name: Start API image
         run: docker run --detach --name api-ci --publish 127.0.0.1:13000:3000 saas-template-api:ci
@@ -165,6 +235,40 @@ jobs:
 
       - name: Verify API liveness endpoint
         run: curl --fail --silent --show-error http://127.0.0.1:13000/health | grep --fixed-strings '"status":"ok"'
+
+      - name: Start Next.js images
+        run: |
+          docker run --detach --name web-ci --publish 127.0.0.1:13001:3000 saas-template-web:ci
+          docker run --detach --name marketing-ci --publish 127.0.0.1:13002:3000 saas-template-marketing:ci
+          docker run --detach --name admin-ci --publish 127.0.0.1:13003:3000 saas-template-admin:ci
+
+      - name: Wait for Next.js health checks
+        shell: bash
+        run: |
+          for container in web-ci marketing-ci admin-ci; do
+            for attempt in {1..60}; do
+              state=$(docker inspect "$container" --format '{{.State.Status}}')
+              status=$(docker inspect "$container" --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}')
+              if [[ "$status" == 'healthy' ]]; then
+                break
+              fi
+              if [[ "$state" == 'exited' || "$state" == 'dead' || "$status" == 'unhealthy' ]]; then
+                docker logs "$container"
+                exit 1
+              fi
+              sleep 2
+            done
+            if [[ "$status" != 'healthy' ]]; then
+              docker logs "$container"
+              exit 1
+            fi
+          done
+
+      - name: Verify Next.js root pages
+        run: |
+          curl --fail --silent --show-error --output /dev/null http://127.0.0.1:13001/
+          curl --fail --silent --show-error --output /dev/null http://127.0.0.1:13002/
+          curl --fail --silent --show-error --output /dev/null http://127.0.0.1:13003/
 
       - name: Start compute image
         run: docker run --detach --name compute-ci --publish 127.0.0.1:18000:8000 saas-template-compute:ci
@@ -193,4 +297,4 @@ jobs:
 
       - name: Stop test containers
         if: always()
-        run: docker rm --force api-ci compute-ci 2>/dev/null || true
+        run: docker rm --force api-ci web-ci marketing-ci admin-ci compute-ci 2>/dev/null || true

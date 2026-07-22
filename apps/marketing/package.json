@@ -8,7 +8,16 @@
       "type:app",
       "platform:browser",
       "scope:marketing"
-    ]
+    ],
+    "targets": {
+      "docker:build": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "docker build --file apps/marketing/Dockerfile --tag saas-template-marketing .",
+          "cwd": "."
+        }
+      }
+    }
   },
   "dependencies": {
     "@saas-template/api-client": "workspace:*",

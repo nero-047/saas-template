@@ -68,6 +68,30 @@ pnpm nx run compute:test
 pnpm nx run compute:build
 ```
 
+## Production containers
+
+Each deployable application has an independent production image. Build them
+through Nx when Docker is available:
+
+```sh
+pnpm nx docker:build @saas-template/api
+pnpm nx docker:build @saas-template/worker
+pnpm nx docker:build web
+pnpm nx docker:build marketing
+pnpm nx docker:build admin
+```
+
+The API and worker images consume Nx-pruned deployment contexts. The web,
+marketing, and admin images build independently and copy only their Next.js
+standalone runtime, static output, and public assets into the final stage. All
+Node.js containers run as the non-root `node` user.
+
+The three Next.js images expose port 3000 and use their existing `/` pages for
+container health checks. The worker exposes no port and intentionally has no
+container health check: it currently has no queue consumer, scheduler, or other
+persistent workload that could provide a truthful readiness signal, so CI builds
+and inspects its image without starting it.
+
 ## Add new projects
 
 While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
@@ -98,8 +122,9 @@ Drizzle generation. Pull requests use Nx affected calculation when Git base and
 head commits are available; pushes to `main` use a safe all-project fallback.
 
 The separate Docker workflow validates `compose.yaml`, starts and checks
-PostgreSQL and Redis, builds the API and compute images, and exercises both
-containers' health checks and liveness endpoints. It never pushes images.
+PostgreSQL and Redis, builds all six deployable application images, inspects
+their runtime users, and smoke-tests the API, compute, web, marketing, and admin
+containers. It never pushes images.
 
 Before opening a pull request, run:
 

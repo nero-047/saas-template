@@ -59,6 +59,12 @@
         ],
         "executor": "nx:noop"
       },
+      "docker:build": {
+        "dependsOn": [
+          "build",
+          "prune"
+        ]
+      },
       "serve": {
         "continuous": true,
         "executor": "@nx/js:node",

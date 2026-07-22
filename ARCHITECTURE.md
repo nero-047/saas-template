@@ -71,6 +71,21 @@ imports or private subpaths.
 `packages/ui` is a React TypeScript library and must remain independent of
 Next.js so it can be consumed by every frontend application.
 
+## Deployment images
+
+API and worker deployment contexts are produced by Nx's lockfile pruning and
+workspace-module copying targets. Their runtime images install production
+dependencies from those contexts rather than copying the monorepo. The worker
+runs as a NestJS application context, exposes no HTTP port, and has no synthetic
+health check. Until a persistent queue consumer or scheduler exists, starting
+it in CI would only verify that the intentionally empty process exits.
+
+Web, marketing, and admin are built as separate Next.js standalone images. Each
+image contains only its traced standalone server, generated static files, and
+public assets, runs as a non-root user, and owns its own port-3000 HTTP process.
+Their existing root pages provide the container liveness and CI smoke checks;
+no application routes exist solely for container orchestration.
+
 ## Continuous integration and runtime ownership
 
 GitHub Actions validates both runtime ecosystems without merging their package
@@ -87,5 +102,6 @@ repository files behind.
 The main CI workflow owns source formatting, synchronization, linting,
 type-checking, tests, builds, and offline Drizzle schema generation. The Docker
 workflow owns Compose validation, PostgreSQL/Redis readiness, image builds,
-runtime-user inspection, and API/compute container health verification. Neither
-workflow deploys or publishes artifacts.
+runtime-user inspection, and runtime smoke tests for the HTTP applications. The
+worker image is build- and configuration-inspected only. Neither workflow
+deploys or publishes artifacts.

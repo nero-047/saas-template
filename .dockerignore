@@ -1,0 +1,16 @@
+.git
+.github
+.nx
+**/.DS_Store
+**/.env
+**/.env.*
+!**/.env.example
+**/.next
+**/.venv
+**/__pycache__
+**/coverage
+**/dist
+**/node_modules
+**/out-tsc
+**/test-output
+*.log

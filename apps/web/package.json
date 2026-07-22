@@ -8,7 +8,16 @@
       "type:app",
       "platform:browser",
       "scope:web"
-    ]
+    ],
+    "targets": {
+      "docker:build": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "docker build --file apps/web/Dockerfile --tag saas-template-web .",
+          "cwd": "."
+        }
+      }
+    }
   },
   "dependencies": {
     "@saas-template/api-client": "workspace:*",

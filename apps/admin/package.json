@@ -8,7 +8,16 @@
       "type:app",
       "platform:browser",
       "scope:admin"
-    ]
+    ],
+    "targets": {
+      "docker:build": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "docker build --file apps/admin/Dockerfile --tag saas-template-admin .",
+          "cwd": "."
+        }
+      }
+    }
   },
   "dependencies": {
     "@saas-template/api-client": "workspace:*",
