@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 import {
@@ -21,8 +22,12 @@ import type {
 export class RequestContextService {
   private readonly storage = new AsyncLocalStorage<MutableRequestContext>();
 
-  run<T>(request: ContextCarrierRequest, callback: () => T): T {
-    const context: MutableRequestContext = { permissions: [] };
+  run<T>(
+    request: ContextCarrierRequest,
+    callback: () => T,
+    requestId: string = randomUUID(),
+  ): T {
+    const context: MutableRequestContext = { requestId, permissions: [] };
     request.requestContext = context;
     return this.storage.run(context, callback);
   }

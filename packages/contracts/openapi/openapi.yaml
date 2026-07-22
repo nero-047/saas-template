@@ -46,6 +46,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '409':
           $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /auth/login:
     post:
       operationId: login
@@ -78,6 +80,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /auth/logout:
     post:
       operationId: logout
@@ -99,6 +103,8 @@ paths:
                 type: string
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /users/me:
     get:
       operationId: getCurrentUser
@@ -120,6 +126,8 @@ paths:
                 $ref: '#/components/schemas/CurrentUserResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /organizations/current:
     get:
       operationId: getCurrentOrganization
@@ -146,6 +154,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /workspaces/current:
     get:
       operationId: getCurrentWorkspace
@@ -173,6 +183,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
 components:
   securitySchemes:
     sessionCookie:
@@ -187,11 +199,12 @@ components:
       name: X-Request-Id
       in: header
       required: false
-      description: Optional caller-provided correlation identifier.
+      description: >-
+        Optional UUID correlation identifier. The API preserves a valid value
+        and replaces a missing or invalid value with a generated UUID.
       schema:
         type: string
-        minLength: 1
-        maxLength: 128
+        format: uuid
     OrganizationId:
       name: X-Organization-Id
       in: header
@@ -214,6 +227,7 @@ components:
       required: true
       schema:
         type: string
+        format: uuid
   responses:
     BadRequest:
       description: Invalid request
@@ -253,6 +267,15 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
     Conflict:
       description: The requested identity conflicts with an existing record
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: Unexpected server error with a sanitized response
       headers:
         X-Request-Id:
           $ref: '#/components/headers/RequestId'
@@ -477,22 +500,32 @@ components:
     ErrorResponse:
       type: object
       additionalProperties: false
-      required: [error]
+      required: [error, requestId]
       properties:
         error:
           type: object
           additionalProperties: false
-          required: [code, message, requestId]
+          required: [code, message]
           properties:
             code:
               type: string
+              enum:
+                - AUTH_REQUIRED
+                - INVALID_CREDENTIALS
+                - FORBIDDEN
+                - NOT_FOUND
+                - VALIDATION_ERROR
+                - CONFLICT
+                - SERVICE_UNAVAILABLE
+                - INTERNAL_ERROR
             message:
-              type: string
-            requestId:
               type: string
             details:
               type: object
               additionalProperties: true
+        requestId:
+          type: string
+          format: uuid
     PaginationMeta:
       type: object
       additionalProperties: false

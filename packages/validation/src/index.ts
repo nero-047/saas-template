@@ -1,4 +1,11 @@
 export {
+  API_ERROR_CODES,
+  apiErrorResponseSchema,
+  requestIdSchema,
+  type ApiErrorCode,
+  type ApiErrorResponse,
+} from './api-errors.js';
+export {
   authResponseSchema,
   currentUserResponseSchema,
   loginRequestSchema,

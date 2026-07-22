@@ -14,6 +14,7 @@ import {
   type RegisterRequest,
 } from '@saas-template/validation';
 
+import { InvalidCredentialsException } from '../../common/errors/api-http.exceptions';
 import type { CurrentUser } from './current-user';
 import { DuplicateEmailError, IdentityRepository } from './identity.repository';
 import { PasswordService } from './password.service';
@@ -130,7 +131,7 @@ export class AuthService {
     );
 
     if (!user || !passwordMatches) {
-      throw new UnauthorizedException('Email or password is invalid.');
+      throw new InvalidCredentialsException();
     }
 
     const now = new Date();

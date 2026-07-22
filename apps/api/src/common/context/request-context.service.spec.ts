@@ -14,7 +14,8 @@ describe('RequestContextService', () => {
     const request: ContextCarrierRequest = {};
 
     context.run(request, () => {
-      expect(context.get()).toEqual({ permissions: [] });
+      const requestId = context.get().requestId;
+      expect(context.get()).toEqual({ requestId, permissions: [] });
 
       context.setAuthenticatedUser({ id: 'user-id', sessionId: 'session-id' });
       context.setOrganization('organization-id', [
@@ -24,6 +25,7 @@ describe('RequestContextService', () => {
       context.setWorkspace('workspace-id', ['workspace.update']);
 
       expect(context.requireWorkspace()).toEqual({
+        requestId,
         userId: 'user-id',
         sessionId: 'session-id',
         organizationId: 'organization-id',
@@ -70,5 +72,18 @@ describe('RequestContextService', () => {
       'first-user',
       'second-user',
     ]);
+  });
+
+  it('preserves an assigned request ID across asynchronous operations', async () => {
+    const requestId = '11111111-1111-4111-8111-111111111111';
+
+    await context.run(
+      {},
+      async () => {
+        await Promise.resolve();
+        expect(context.get().requestId).toBe(requestId);
+      },
+      requestId,
+    );
   });
 });

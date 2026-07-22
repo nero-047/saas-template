@@ -107,12 +107,16 @@ Request context is resolved in stages: current user, organization membership,
 then optional workspace membership. Controllers added later should translate
 HTTP input only; context services and repositories enforce tenant ownership.
 
-Each HTTP request receives an isolated AsyncLocalStorage context. The session
-guard adds `userId` and `sessionId`; organization and workspace guards validate
-the explicit tenant headers, resolve membership through tenant-safe
-repositories, and add the selected IDs and membership permissions. No default
-organization or workspace is guessed. Requiring a context stage that has not
-been established fails closed.
+Every HTTP request first receives a UUID request ID. A valid caller-provided
+`X-Request-ID` UUID is preserved; missing or malformed values are replaced. The
+ID is returned in the response header and stored with the isolated
+AsyncLocalStorage context, so authentication, tenant resolution, authorization,
+and later asynchronous feature work share one correlation identity. The
+session guard then adds `userId` and `sessionId`; organization and workspace
+guards validate the explicit tenant headers, resolve membership through
+tenant-safe repositories, and add the selected IDs and membership permissions.
+No default organization or workspace is guessed. Requiring a context stage
+that has not been established fails closed.
 
 Organization-level permission context is populated only from an
 organization-level membership. A workspace-only membership may resolve its
@@ -123,9 +127,11 @@ specific workspace membership is resolved.
 ```text
 HTTP request
      ↓
-session authentication
+request ID
      ↓
 request context
+     ↓
+session authentication
      ↓
 organization / workspace resolution
      ↓
@@ -133,6 +139,12 @@ permission check
      ↓
 feature module
 ```
+
+A global exception filter translates validation, authentication,
+authorization, not-found, conflict, dependency, and unexpected failures into a
+language-neutral error envelope containing the same request ID. Unexpected
+exceptions receive a generic message and code; stack traces, database errors,
+SQL, internal hosts, and secrets are never included in HTTP responses.
 
 Future organization-scoped handlers apply `SessionGuard` followed by
 `OrganizationContextGuard`; workspace-scoped handlers then add

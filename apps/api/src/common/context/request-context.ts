@@ -1,4 +1,5 @@
 export interface RequestContext {
+  readonly requestId: string;
   readonly userId?: string;
   readonly organizationId?: string;
   readonly workspaceId?: string;
@@ -21,6 +22,7 @@ export interface WorkspaceRequestContext extends OrganizationRequestContext {
 }
 
 export interface MutableRequestContext {
+  requestId: string;
   userId?: string;
   organizationId?: string;
   workspaceId?: string;
@@ -30,4 +32,7 @@ export interface MutableRequestContext {
 
 export interface ContextCarrierRequest {
   requestContext?: MutableRequestContext;
+  readonly headers?: Readonly<
+    Record<string, string | readonly string[] | undefined>
+  >;
 }

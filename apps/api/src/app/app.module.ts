@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 
 import { RequestContextModule } from '../common/context/request-context.module';
+import { ApiExceptionFilter } from '../common/errors/api-exception.filter';
 import { AuthModule } from '../modules/auth/auth.module';
 import { DatabaseModule } from '../modules/database/database.module';
 import { HealthModule } from '../modules/health/health.module';
@@ -19,6 +21,12 @@ import { WorkspacesModule } from '../modules/workspaces/workspaces.module';
     OrganizationsModule,
     WorkspacesModule,
     PermissionsModule,
+  ],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: ApiExceptionFilter,
+    },
   ],
 })
 export class AppModule {}

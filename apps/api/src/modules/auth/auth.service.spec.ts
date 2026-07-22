@@ -1,5 +1,6 @@
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 
+import { InvalidCredentialsException } from '../../common/errors/api-http.exceptions';
 import { AuthService } from './auth.service';
 import { IdentityRepository } from './identity.repository';
 import { PasswordService } from './password.service';
@@ -136,10 +137,7 @@ describe('AuthService', () => {
         email: 'owner@example.com',
         password: 'wrong-password',
       }),
-    ).rejects.toMatchObject({
-      constructor: UnauthorizedException,
-      message: 'Email or password is invalid.',
-    });
+    ).rejects.toBeInstanceOf(InvalidCredentialsException);
     expect(sessions.create).not.toHaveBeenCalled();
   });
 

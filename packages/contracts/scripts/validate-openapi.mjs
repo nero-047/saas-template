@@ -93,4 +93,20 @@ if (document.servers?.[0]?.url !== '/api/v1') {
   );
 }
 
+if (document.components.parameters?.RequestId?.schema?.format !== 'uuid') {
+  throw new Error('X-Request-Id must be documented as a UUID header.');
+}
+
+const errorResponse = document.components.schemas.ErrorResponse;
+if (
+  !errorResponse.required?.includes('error') ||
+  !errorResponse.required?.includes('requestId') ||
+  errorResponse.properties?.error?.properties?.requestId !== undefined ||
+  errorResponse.properties?.requestId?.format !== 'uuid'
+) {
+  throw new Error(
+    'ErrorResponse must contain top-level error and UUID requestId fields.',
+  );
+}
+
 console.log('OpenAPI contract structure is valid.');
