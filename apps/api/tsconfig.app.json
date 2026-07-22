@@ -26,6 +26,9 @@
       "path": "../../packages/db/tsconfig.lib.json"
     },
     {
+      "path": "../../packages/jobs/tsconfig.lib.json"
+    },
+    {
       "path": "../../packages/validation/tsconfig.lib.json"
     }
   ]

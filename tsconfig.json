@@ -25,6 +25,9 @@
       "path": "./packages/db"
     },
     {
+      "path": "./packages/jobs"
+    },
+    {
       "path": "./apps/web"
     },
     {

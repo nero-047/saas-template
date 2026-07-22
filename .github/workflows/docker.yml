@@ -213,6 +213,45 @@ jobs:
           test "$(docker image inspect saas-template-worker:ci --format '{{json .Config.ExposedPorts}}')" = 'null'
           test "$(docker image inspect saas-template-worker:ci --format '{{json .Config.Healthcheck}}')" = 'null'
 
+      - name: Start worker with isolated Redis
+        shell: bash
+        run: |
+          docker network create worker-ci-network
+          docker run --detach --name worker-redis-ci --network worker-ci-network redis:7.4-alpine
+          for attempt in {1..60}; do
+            if [[ "$(docker exec worker-redis-ci redis-cli ping 2>/dev/null | tr -d '\r')" == 'PONG' ]]; then
+              break
+            fi
+            if [[ "$attempt" == '60' ]]; then
+              docker logs worker-redis-ci
+              exit 1
+            fi
+            sleep 1
+          done
+          docker run --detach --name worker-ci --network worker-ci-network \
+            --env REDIS_URL=redis://worker-redis-ci:6379/0 \
+            saas-template-worker:ci
+
+      - name: Verify worker consumers remain running
+        shell: bash
+        run: |
+          for attempt in {1..30}; do
+            state=$(docker inspect worker-ci --format '{{.State.Status}}')
+            if [[ "$state" != 'running' ]]; then
+              docker logs worker-ci
+              exit 1
+            fi
+            if docker logs worker-ci 2>&1 | grep --quiet 'Started 2 queue consumers'; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs worker-ci
+          exit 1
+
+      - name: Stop worker gracefully
+        run: docker stop --time 30 worker-ci
+
       - name: Start API image
         run: docker run --detach --name api-ci --publish 127.0.0.1:13000:3000 saas-template-api:ci
 
@@ -297,4 +336,7 @@ jobs:
 
       - name: Stop test containers
         if: always()
-        run: docker rm --force api-ci web-ci marketing-ci admin-ci compute-ci 2>/dev/null || true
+        shell: bash
+        run: |
+          docker rm --force api-ci worker-ci worker-redis-ci web-ci marketing-ci admin-ci compute-ci 2>/dev/null || true
+          docker network rm worker-ci-network 2>/dev/null || true

@@ -84,11 +84,16 @@
             "buildTarget": "@saas-template/worker:build:production"
           }
         }
+      },
+      "test": {
+        "options": {
+          "passWithNoTests": false
+        }
       }
     }
   },
   "dependencies": {
-    "@saas-template/db": "workspace:*",
+    "@saas-template/jobs": "workspace:*",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "reflect-metadata": "^0.2.0",

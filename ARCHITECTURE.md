@@ -38,7 +38,8 @@ liveness without external checks; `/ready` reports traffic readiness by probing
 the mandatory PostgreSQL dependency only when requested.
 
 The NestJS worker owns queues, notifications, scheduled business jobs, webhook
-delivery, and background domain processing.
+delivery, and background domain processing. It is a persistent BullMQ consumer
+runtime backed by Redis; it exposes no HTTP port.
 
 Python compute owns AI/ML, OCR, document processing, analytics, forecasting,
 scientific workloads, data transformation, image processing, and other
@@ -221,6 +222,39 @@ authorization, credential, API-key, and secret fields are removed recursively.
 Future modules define namespaced actions at the point where their transactional
 behavior is implemented; audit rows must never contain request bodies or raw
 credentials.
+
+## Background jobs
+
+`packages/jobs` is the NestJS-free, database-free queue boundary shared by API
+producers and worker consumers. It owns durable queue names, `EMAIL_SEND` and
+`NOTIFICATION_SEND` job contracts, runtime payload validation, correlation
+context, lazy Redis URL parsing, and BullMQ client factories. Imports do not
+read configuration or create network connections.
+
+The API `QueueService` creates a producer only on first use. It captures the
+current request, user, organization, and workspace identifiers into a validated
+job envelope; work created outside HTTP receives a new request ID. Session IDs,
+cookies, credentials, and authorization grants are deliberately excluded. The
+worker validates the envelope before using its own `AsyncLocalStorage` context
+for the processor invocation.
+
+```text
+HTTP request
+     ↓
+validated queue job
+     ↓
+BullMQ / Redis
+     ↓
+worker execution
+     ↓
+restored correlation and tenant context
+```
+
+Email and notification processors currently acknowledge validated jobs without
+calling a provider. BullMQ retry and bounded retention policy are transport
+defaults, not provider delivery guarantees. Consumers attach lifecycle and
+error listeners and call `Worker.close()` during Nest shutdown so active jobs
+can finish. Redis is queue storage only; no database job tables are introduced.
 
 The platform contract reserves `X-Organization-Id` and `X-Workspace-Id` for
 tenant selection and `X-Request-Id` for correlation. Platform HTTP operations

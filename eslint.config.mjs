@@ -33,7 +33,8 @@ export default [
                                 "type:validation",
                                 "type:api-client",
                                 "type:ui",
-                                "type:db"
+                                "type:db",
+                                "type:jobs"
                             ]
                         },
                         {
@@ -86,6 +87,12 @@ export default [
                             sourceTag: "type:db",
                             onlyDependOnLibsWithTags: [
                                 "type:db"
+                            ]
+                        },
+                        {
+                            sourceTag: "type:jobs",
+                            onlyDependOnLibsWithTags: [
+                                "type:jobs"
                             ]
                         }
                     ]

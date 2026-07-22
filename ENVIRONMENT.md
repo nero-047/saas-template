@@ -15,16 +15,19 @@ before use.
 | Local infrastructure | `POSTGRES_PORT`            | Docker Compose runtime                                   | Optional local override                         |
 | Local infrastructure | `REDIS_PORT`               | Docker Compose runtime                                   | Optional local override                         |
 | API                  | `DATABASE_URL`             | Server-only runtime                                      | Required only when a database client is created |
+| API / worker         | `REDIS_URL`                | Server-only runtime, secret when credentials are present | Required when queue infrastructure starts       |
+| API / worker         | `QUEUE_PREFIX`             | Server-only runtime                                      | Optional; defaults to `saas-template`            |
 | API                  | `PORT`                     | Server-only process runtime                              | Optional; defaults to `3000`                    |
 | API                  | `SESSION_COOKIE_NAME`      | Server-only runtime                                      | Optional; defaults to `session`                 |
 | API                  | `SESSION_COOKIE_SECURE`    | Server-only runtime                                      | Optional; defaults on in production             |
 | API                  | `SESSION_COOKIE_SAME_SITE` | Server-only runtime                                      | Optional; defaults to `lax`                     |
 | API                  | `SESSION_TTL_SECONDS`      | Server-only runtime                                      | Optional; defaults to 30 days                   |
+| Worker               | `WORKER_CONCURRENCY`       | Server-only runtime                                      | Optional; defaults to `5`                       |
 | Compute              | `COMPUTE_ENVIRONMENT`      | Server-only runtime                                      | Optional typed setting                          |
 | Compute              | `COMPUTE_SERVICE_NAME`     | Server-only runtime                                      | Optional typed setting                          |
 
-The worker currently consumes no environment variables. Web, marketing, and
-admin currently consume no application-specific environment variables.
+Web, marketing, and admin currently consume no application-specific
+environment variables.
 
 `DRIZZLE_OUT` is a tooling-only output override used during schema generation;
 it is not an application runtime setting. `NODE_ENV`, `PORT`, `HOSTNAME`, and
@@ -50,14 +53,16 @@ Create only the local files needed for the services being run:
 ```sh
 cp .env.example .env
 cp apps/api/.env.example apps/api/.env.local
+cp apps/worker/.env.example apps/worker/.env.local
 cp apps/compute/.env.example apps/compute/.env.local
 ```
 
 The root `.env` configures the local PostgreSQL and Redis containers. The API
-file contains its server-only database connection, process port, and session
-cookie policy. The compute file contains its prefixed typed settings. No worker
-or Next.js example exists until those applications have a real variable to
-consume.
+file contains its server-only database and Redis connections, process port,
+session cookie policy, and queue namespace. The worker file contains its Redis
+connection, queue namespace, and concurrency. The compute file contains its
+prefixed typed settings. No Next.js example exists until those applications
+have a real variable to consume.
 
 Run applications through Nx from the repository root so project-level files
 are resolved consistently. Running compute directly from `apps/compute` also
@@ -85,12 +90,15 @@ contexts. Only `.env.example` files may be tracked.
 
 ## Containers
 
-- API receives `DATABASE_URL`, session-cookie settings, and any `PORT` override
-  at container runtime. None are baked into the image; `/health` and image
-  construction work without a database value. Production enables Secure
-  cookies by default.
-- Worker currently receives no application settings. Add runtime injection only
-  when a real persistent workload consumes it.
+- API receives `DATABASE_URL`, `REDIS_URL`, queue settings, session-cookie
+  settings, and any `PORT` override at container runtime. None are baked into
+  the image; `/health`, image construction, and API startup work without Redis.
+  Queue configuration is first read when work is enqueued. Production enables
+  Secure cookies by default.
+- Worker receives `REDIS_URL`, optional `QUEUE_PREFIX`, and optional
+  `WORKER_CONCURRENCY` at container runtime. It validates them and establishes
+  its BullMQ consumers during startup; invalid or missing Redis configuration
+  fails startup safely.
 - Compute receives `COMPUTE_*` settings at container runtime. Its image keeps a
   fixed port-8000 process contract.
 - Web, marketing, and admin receive server-only settings at container runtime
@@ -110,6 +118,11 @@ remains deliberately lazy: it is required when the server-only database client
 is first created, so builds and `/health` do not need PostgreSQL configuration.
 Readiness converts database failures into its safe HTTP 503 response.
 
+Queue package imports, builds, linting, and type-checking never read
+`REDIS_URL`. The API loads it on its first enqueue. The worker loads it when
+Nest application bootstrap starts its consumers; `WORKER_CONCURRENCY` must be
+an integer from 1 through 100.
+
 Compute settings are validated when the ASGI application is created. Invalid
-`COMPUTE_ENVIRONMENT` values fail application startup. The worker and Next.js
-applications have no application-specific required values to validate yet.
+`COMPUTE_ENVIRONMENT` values fail application startup. The Next.js applications
+have no application-specific required values to validate yet.

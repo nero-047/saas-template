@@ -184,10 +184,28 @@ standalone runtime, static output, and public assets into the final stage. All
 Node.js containers run as the non-root `node` user.
 
 The three Next.js images expose port 3000 and use their existing `/` pages for
-container health checks. The worker exposes no port and intentionally has no
-container health check: it currently has no queue consumer, scheduler, or other
-persistent workload that could provide a truthful readiness signal, so CI builds
-and inspects its image without starting it.
+container health checks. The worker exposes no port and has no redundant HTTP
+or process health check. It remains alive through its BullMQ consumers; Docker
+CI starts it against an isolated Redis container and verifies the process stays
+running before sending `SIGTERM` for graceful cleanup.
+
+## Background jobs
+
+`packages/jobs` contains the shared, NestJS-free contracts for the
+`EMAIL_SEND` and `NOTIFICATION_SEND` BullMQ jobs. Start local Redis, copy the
+worker environment example, and run the persistent consumer through Nx:
+
+```sh
+pnpm infra:up
+cp apps/worker/.env.example apps/worker/.env.local
+pnpm nx serve @saas-template/worker
+```
+
+API producers inject `QueueService`; it creates Redis connections only on the
+first enqueue and closes them during shutdown. The worker validates every job
+and restores request/user/organization/workspace correlation context before a
+processor runs. The current processors are transport placeholders and do not
+send email or notifications.
 
 ## Add new projects
 
@@ -233,8 +251,8 @@ explicitly excludes Flutter so unrelated CI does not provision its SDK.
 
 The separate Docker workflow validates `compose.yaml`, starts and checks
 PostgreSQL and Redis, builds all six deployable application images, inspects
-their runtime users, and smoke-tests the API, compute, web, marketing, and admin
-containers. It never pushes images.
+their runtime users, smoke-tests the HTTP applications, and starts the worker
+against isolated Redis before stopping it gracefully. It never pushes images.
 
 Before opening a pull request, run:
 

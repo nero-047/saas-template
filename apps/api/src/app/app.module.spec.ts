@@ -8,6 +8,7 @@ import { AuditLogService } from '../modules/audit/audit-log.service';
 import { DatabaseService } from '../modules/database/database.service';
 import { OrganizationsService } from '../modules/organizations/organizations.service';
 import { PermissionsService } from '../modules/permissions/permissions.service';
+import { QueueService } from '../modules/queue/queue.service';
 import { UsersService } from '../modules/users/users.service';
 import { WorkspacesService } from '../modules/workspaces/workspaces.service';
 
@@ -26,6 +27,7 @@ describe('AppModule identity foundation', () => {
     expect(app.get(OrganizationsService)).toBeDefined();
     expect(app.get(WorkspacesService)).toBeDefined();
     expect(app.get(PermissionsService)).toBeDefined();
+    expect(app.get(QueueService)).toBeDefined();
     expect(app.get(RequestContextService)).toBeDefined();
     expect(app.get(TenantContextService)).toBeDefined();
 

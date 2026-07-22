@@ -1,0 +1,35 @@
+{
+  "name": "@saas-template/jobs",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "browser": false,
+  "engines": {
+    "node": ">=24"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@saas-template/source": "./index.ts",
+      "types": "./dist/index.d.ts",
+      "node": "./dist/index.js",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "nx": {
+    "name": "jobs",
+    "tags": [
+      "type:jobs",
+      "platform:node"
+    ]
+  },
+  "dependencies": {
+    "bullmq": "~5.80.10",
+    "tslib": "^2.3.0",
+    "zod": "^4.4.3"
+  }
+}

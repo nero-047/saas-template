@@ -8,6 +8,8 @@ allowBuilds:
   argon2: true
   esbuild: true
   less: true
+  # BullMQ's MessagePack native accelerator is optional; use its JS fallback.
+  msgpackr-extract: false
   nx: true
   sharp: true
   unrs-resolver: true
