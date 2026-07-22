@@ -4,7 +4,7 @@
 
 ✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/node?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `pnpm nx graph` to visually explore what was created. Now, let's get you up to speed!
+[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/node?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or run `pnpm nx graph` to visually explore what was created. Now, let's get you up to speed!
 
 ## Run tasks
 
@@ -85,6 +85,37 @@ pnpm nx run compute:test
 pnpm nx run compute:build
 ```
 
+## React Native application
+
+`apps/rn` is the minimal iOS and Android client. It uses React Native CLI with
+the official Nx React Native integration; Expo and a navigation framework are
+intentionally absent until an application requirement justifies them. React
+Native 0.84 is used because it is the newest React Native line supported by Nx
+23's integration and is compatible with the repository's Node.js 24 runtime.
+
+Start Metro and launch a local native build with:
+
+```sh
+pnpm nx run rn:start
+pnpm nx run rn:run-android
+pnpm nx run rn:run-ios
+```
+
+Android development requires JDK 17 and the Android SDK. iOS development
+requires macOS, Xcode, Ruby, and CocoaPods; install pods explicitly with
+`pnpm nx run rn:pod-install`. Platform-independent checks are available as:
+
+```sh
+pnpm nx run-many -t lint typecheck test -p rn
+pnpm nx run rn:validate-ios
+pnpm nx run rn:build-android --mode=debug
+```
+
+The mobile app does not currently depend on workspace libraries. Future mobile
+code may use the portable `shared`, `validation`, and `api-client` packages when
+their public contracts are native-safe; it must not import the web-only `ui`
+package.
+
 ## Production containers
 
 Each deployable application has an independent production image. Build them
@@ -138,6 +169,12 @@ TypeScript formatting, applicable lint/typecheck/test/build targets, and offline
 Drizzle generation. Pull requests use Nx affected calculation when Git base and
 head commits are available; pushes to `main` use a safe all-project fallback.
 
+The separate mobile workflow runs source checks and a Linux-compatible iOS
+project configuration validation, then builds Android in an isolated job with
+the required JDK and Android SDK. This keeps the main CI workflow independent of
+mobile SDK setup. Native iOS compilation remains a macOS developer or release
+pipeline responsibility.
+
 The separate Docker workflow validates `compose.yaml`, starts and checks
 PostgreSQL and Redis, builds all six deployable application images, inspects
 their runtime users, and smoke-tests the API, compute, web, marketing, and admin
@@ -174,12 +211,13 @@ Nx Console is an editor extension that enriches your developer experience. It le
 
 Learn more:
 
-- [Learn more about this workspace setup](https://nx.dev/nx-api/node?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
+- [Learn more about this workspace setup](https://nx.dev/nx-api/node?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
 - [Learn about Nx affected commands](https://nx.dev/ci/features/affected?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
 - [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
 - [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
 
 And join the Nx community:
+
 - [Discord](https://go.nx.dev/community)
 - [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
 - [Our Youtube channel](https://www.youtube.com/@nxdevtools)

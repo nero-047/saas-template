@@ -46,6 +46,14 @@ export default [
                             ]
                         },
                         {
+                            sourceTag: "platform:native",
+                            onlyDependOnLibsWithTags: [
+                                "type:shared",
+                                "type:validation",
+                                "type:api-client"
+                            ]
+                        },
+                        {
                             sourceTag: "type:api-client",
                             onlyDependOnLibsWithTags: [
                                 "type:shared",

@@ -20,6 +20,11 @@ specialised-processing service lives in `apps/compute` and is managed with uv.
 It is represented as an Nx application but is not a pnpm workspace package and
 does not import TypeScript workspace packages.
 
+The React Native client lives in `apps/rn` and owns checked-in Android and iOS
+projects. Nx's official React Native plugin orchestrates Metro, native builds,
+tests, and platform tooling. The application starts as a minimal shell without
+navigation, authentication, or product-specific modules.
+
 ## Service responsibilities
 
 The NestJS API owns authentication, authorization, CRUD, transactional business
@@ -71,6 +76,12 @@ imports or private subpaths.
 `packages/ui` is a React TypeScript library and must remain independent of
 Next.js so it can be consumed by every frontend application.
 
+React Native is a separate UI platform and must not import `packages/ui`, which
+contains web React components. It may consume the portable public APIs of
+`shared`, `validation`, and `api-client` only after their dependencies and
+runtime assumptions are valid on React Native. The initial shell deliberately
+has no workspace-package dependencies.
+
 ## Configuration boundaries
 
 Runtime configuration is owned and validated by the consuming application.
@@ -116,3 +127,9 @@ workflow owns Compose validation, PostgreSQL/Redis readiness, image builds,
 runtime-user inspection, and runtime smoke tests for the HTTP applications. The
 worker image is build- and configuration-inspected only. Neither workflow
 deploys or publishes artifacts.
+
+The mobile workflow isolates Android SDK provisioning from main CI. It runs
+React Native lint, type-check, and test targets, validates the checked-in iOS
+configuration on Linux, and builds an Android debug application in a dedicated
+job. Linux CI does not claim to compile iOS; a future macOS release workflow can
+own Xcode compilation and signing when distribution requirements exist.

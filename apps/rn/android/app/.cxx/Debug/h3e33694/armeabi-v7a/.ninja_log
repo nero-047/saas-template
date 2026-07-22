@@ -1,0 +1,5 @@
+# ninja log v5
+2	159	0	/Users/nero/Desktop/tolangi/saas-template/apps/rn/android/app/.cxx/Debug/h3e33694/armeabi-v7a/CMakeFiles/cmake.verify_globs	5144d16ca38d0cf
+0	5351	1784715769558071822	CMakeFiles/appmodules.dir/Users/nero/Desktop/tolangi/saas-template/apps/rn/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	45a34e13cfaf3c5c
+2	6150	1784715770289496452	CMakeFiles/appmodules.dir/OnLoad.cpp.o	359e358e23a5a32e
+6151	7052	1784715771260772736	/Users/nero/Desktop/tolangi/saas-template/apps/rn/android/app/build/intermediates/cxx/Debug/h3e33694/obj/armeabi-v7a/libappmodules.so	41ca7850534daba4

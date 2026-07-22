@@ -1,0 +1,126 @@
+name: Mobile
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mobile.yml'
+      - '.node-version'
+      - 'apps/rn/**'
+      - 'packages/api-client/**'
+      - 'packages/shared/**'
+      - 'packages/validation/**'
+      - 'eslint.config.mjs'
+      - 'nx.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'tsconfig.json'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/mobile.yml'
+      - '.node-version'
+      - 'apps/rn/**'
+      - 'packages/api-client/**'
+      - 'packages/shared/**'
+      - 'packages/validation/**'
+      - 'eslint.config.mjs'
+      - 'nx.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'tsconfig.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: 'true'
+  NX_DAEMON: 'false'
+  NX_TASKS_RUNNER_DYNAMIC_OUTPUT: 'false'
+
+jobs:
+  quality:
+    name: Mobile quality and iOS configuration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+
+      - name: Activate repository pnpm version
+        shell: bash
+        run: |
+          package_manager=$(node -p "require('./package.json').packageManager")
+          if [[ "$package_manager" != pnpm@* ]]; then
+            echo "Expected packageManager to declare pnpm" >&2
+            exit 1
+          fi
+          corepack enable
+          corepack install --global "$package_manager"
+          pnpm --version
+
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check Nx synchronization
+        run: pnpm nx sync:check
+
+      - name: Validate mobile source
+        run: pnpm nx run-many -t lint typecheck test -p rn --skip-nx-cache --outputStyle=static
+
+      - name: Validate iOS project configuration
+        run: pnpm nx run rn:validate-ios --skip-nx-cache --outputStyle=static
+
+  android:
+    name: Android debug build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+          cache-dependency-path: |
+            apps/rn/android/**/*.gradle*
+            apps/rn/android/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Activate repository pnpm version
+        shell: bash
+        run: |
+          package_manager=$(node -p "require('./package.json').packageManager")
+          corepack enable
+          corepack install --global "$package_manager"
+
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Android SDK components
+        shell: bash
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;27.1.12297006"
+
+      - name: Build Android application
+        run: pnpm nx run rn:build-android --mode=debug --skip-nx-cache --outputStyle=static

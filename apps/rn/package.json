@@ -1,0 +1,38 @@
+{
+  "name": "@saas-template/rn",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "name": "rn",
+    "tags": [
+      "type:app",
+      "scope:rn",
+      "platform:native"
+    ],
+    "targets": {
+      "validate-ios": {
+        "cache": true,
+        "executor": "nx:run-commands",
+        "inputs": [
+          "{projectRoot}/app.json",
+          "{projectRoot}/ios/**/*",
+          "{projectRoot}/scripts/validate-ios.mjs"
+        ],
+        "options": {
+          "command": "node scripts/validate-ios.mjs",
+          "cwd": "apps/rn"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-native": "~0.84.1"
+  },
+  "devDependencies": {
+    "@react-native/metro-config": "~0.84.1",
+    "@testing-library/react-native": "~13.2.0",
+    "metro-config": "~0.83.0",
+    "react-test-renderer": "^19.2.0"
+  }
+}

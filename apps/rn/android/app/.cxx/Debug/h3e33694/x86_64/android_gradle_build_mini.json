@@ -1,0 +1,31 @@
+{
+  "buildFiles": [
+    "/Users/nero/Desktop/tolangi/saas-template/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/nero/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/nero/Desktop/tolangi/saas-template/apps/rn/android/app/.cxx/Debug/h3e33694/x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/nero/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/nero/Desktop/tolangi/saas-template/apps/rn/android/app/.cxx/Debug/h3e33694/x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "appmodules::@6890427a1f51a3e7e1df": {
+      "artifactName": "appmodules",
+      "abi": "x86_64",
+      "output": "/Users/nero/Desktop/tolangi/saas-template/apps/rn/android/app/build/intermediates/cxx/Debug/h3e33694/obj/x86_64/libappmodules.so",
+      "runtimeFiles": [
+        "/Users/nero/.gradle/caches/8.13/transforms/d28216b1f299bedd089711cdfcc51ecb/transformed/fbjni-0.7.0/prefab/modules/fbjni/libs/android.x86_64/libfbjni.so",
+        "/Users/nero/.gradle/caches/8.13/transforms/f008af38d590a55758788c8dbeac9a53/transformed/react-android-0.84.1-debug/prefab/modules/jsi/libs/android.x86_64/libjsi.so",
+        "/Users/nero/.gradle/caches/8.13/transforms/f008af38d590a55758788c8dbeac9a53/transformed/react-android-0.84.1-debug/prefab/modules/reactnative/libs/android.x86_64/libreactnative.so"
+      ]
+    }
+  }
+}

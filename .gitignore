@@ -63,3 +63,18 @@ test-output
 # Next.js
 .next
 out
+
+# React Native
+apps/rn/android/.gradle/
+apps/rn/android/**/build/
+apps/rn/android/local.properties
+apps/rn/ios/Pods/
+apps/rn/ios/build/
+apps/rn/ios/DerivedData/
+apps/rn/ios/**/xcuserdata/
+**/.xcode.env.local
+*.keystore
+!apps/rn/android/app/debug.keystore
+*.jsbundle
+apps/rn/vendor/bundle/
+.metro-health-check*
