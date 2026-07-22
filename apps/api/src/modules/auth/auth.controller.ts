@@ -9,9 +9,9 @@ import {
 } from '@nestjs/common';
 import type { AuthResponse } from '@saas-template/validation';
 
+import { CurrentUser } from '../../common/context/current-context.decorators';
 import { AuthService } from './auth.service';
-import type { CurrentUser } from './current-user';
-import { RequestUser } from './request-user.decorator';
+import type { CurrentUser as AuthenticatedUser } from './current-user';
 import {
   type CookieResponse,
   SessionCookieService,
@@ -50,7 +50,7 @@ export class AuthController {
   @UseGuards(SessionGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(
-    @RequestUser() currentUser: CurrentUser,
+    @CurrentUser() currentUser: AuthenticatedUser,
     @Res({ passthrough: true }) response: CookieResponse,
   ): Promise<void> {
     await this.auth.logout(currentUser);

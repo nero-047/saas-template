@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { RequestContextModule } from '../common/context/request-context.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { DatabaseModule } from '../modules/database/database.module';
 import { HealthModule } from '../modules/health/health.module';
@@ -11,6 +12,7 @@ import { WorkspacesModule } from '../modules/workspaces/workspaces.module';
 @Module({
   imports: [
     DatabaseModule,
+    RequestContextModule,
     HealthModule,
     AuthModule,
     UsersModule,

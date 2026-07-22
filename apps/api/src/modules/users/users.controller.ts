@@ -1,8 +1,8 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import type { CurrentUserResponse } from '@saas-template/validation';
 
-import type { CurrentUser } from '../auth/current-user';
-import { RequestUser } from '../auth/request-user.decorator';
+import { CurrentUser } from '../../common/context/current-context.decorators';
+import type { CurrentUser as AuthenticatedUser } from '../auth/current-user';
 import { SessionGuard } from '../auth/session.guard';
 import { UsersService } from './users.service';
 
@@ -13,7 +13,7 @@ export class UsersController {
   @Get('me')
   @UseGuards(SessionGuard)
   getCurrent(
-    @RequestUser() currentUser: CurrentUser,
+    @CurrentUser() currentUser: AuthenticatedUser,
   ): Promise<CurrentUserResponse> {
     return this.users.getCurrent(currentUser);
   }

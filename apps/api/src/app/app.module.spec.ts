@@ -1,6 +1,8 @@
 import { Test } from '@nestjs/testing';
 
 import { AppModule } from './app.module';
+import { RequestContextService } from '../common/context/request-context.service';
+import { TenantContextService } from '../common/context/tenant-context.service';
 import { AuthService } from '../modules/auth/auth.service';
 import { DatabaseService } from '../modules/database/database.service';
 import { OrganizationsService } from '../modules/organizations/organizations.service';
@@ -13,14 +15,18 @@ describe('AppModule identity foundation', () => {
     const module = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
+    const app = module.createNestApplication();
+    await app.init();
 
-    expect(module.get(DatabaseService)).toBeDefined();
-    expect(module.get(AuthService)).toBeDefined();
-    expect(module.get(UsersService)).toBeDefined();
-    expect(module.get(OrganizationsService)).toBeDefined();
-    expect(module.get(WorkspacesService)).toBeDefined();
-    expect(module.get(PermissionsService)).toBeDefined();
+    expect(app.get(DatabaseService)).toBeDefined();
+    expect(app.get(AuthService)).toBeDefined();
+    expect(app.get(UsersService)).toBeDefined();
+    expect(app.get(OrganizationsService)).toBeDefined();
+    expect(app.get(WorkspacesService)).toBeDefined();
+    expect(app.get(PermissionsService)).toBeDefined();
+    expect(app.get(RequestContextService)).toBeDefined();
+    expect(app.get(TenantContextService)).toBeDefined();
 
-    await module.close();
+    await app.close();
   });
 });

@@ -40,4 +40,31 @@ describe('PermissionsService', () => {
       service.assertPermission(context, 'workspace.manage'),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
+
+  it('checks an already-resolved request subject without database access', () => {
+    expect(
+      service.can(
+        { permissions: ['workspace.read', 'workspace.update'] },
+        'workspace.update',
+      ),
+    ).toBe(true);
+    expect(
+      service.can({ permissions: ['workspace.read'] }, 'workspace.update'),
+    ).toBe(false);
+    expect(service.can(undefined, 'workspace.read')).toBe(false);
+  });
+
+  it('requires every declared permission and denies empty requirements', () => {
+    const subject = {
+      permissions: ['workspace.read', 'workspace.update'],
+    };
+
+    expect(() =>
+      service.assertCan(subject, ['workspace.read', 'workspace.update']),
+    ).not.toThrow();
+    expect(() =>
+      service.assertCan(subject, ['workspace.read', 'workspace.delete']),
+    ).toThrow(ForbiddenException);
+    expect(() => service.assertCan(subject, [])).toThrow(ForbiddenException);
+  });
 });

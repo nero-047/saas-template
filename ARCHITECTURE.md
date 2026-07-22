@@ -107,6 +107,42 @@ Request context is resolved in stages: current user, organization membership,
 then optional workspace membership. Controllers added later should translate
 HTTP input only; context services and repositories enforce tenant ownership.
 
+Each HTTP request receives an isolated AsyncLocalStorage context. The session
+guard adds `userId` and `sessionId`; organization and workspace guards validate
+the explicit tenant headers, resolve membership through tenant-safe
+repositories, and add the selected IDs and membership permissions. No default
+organization or workspace is guessed. Requiring a context stage that has not
+been established fails closed.
+
+Organization-level permission context is populated only from an
+organization-level membership. A workspace-only membership may resolve its
+parent organization so workspace selection can continue, but it receives no
+organization-level grants; workspace permissions are loaded only after that
+specific workspace membership is resolved.
+
+```text
+HTTP request
+     ↓
+session authentication
+     ↓
+request context
+     ↓
+organization / workspace resolution
+     ↓
+permission check
+     ↓
+feature module
+```
+
+Future organization-scoped handlers apply `SessionGuard` followed by
+`OrganizationContextGuard`; workspace-scoped handlers then add
+`WorkspaceContextGuard`. Permission-protected handlers add `PermissionGuard`
+and declare exact keys with `@RequirePermissions(...)`. The ordered guards must
+run before using `@CurrentUser()`, `@CurrentOrganization()`,
+`@CurrentWorkspace()`, or `@Permissions()`. Services that do not receive HTTP
+parameters can inject `RequestContextService` and call `requireAuthenticated()`,
+`requireOrganization()`, or `requireWorkspace()`.
+
 Authorization is role-based:
 
 ```text
@@ -118,6 +154,9 @@ Membership
 Roles belong to one organization. Permission keys are global capabilities, and
 join-table constraints prevent assigning a role to a membership from another
 organization. Permission checks deny by default and require an explicit key.
+`PermissionsService.can(context, key)` checks already-resolved permissions
+without another database query; `assertCan` and `PermissionGuard` reject
+missing or incomplete grants.
 The platform contract reserves `X-Organization-Id` and `X-Workspace-Id` for
 tenant selection and `X-Request-Id` for correlation. Platform HTTP operations
 are versioned under `/api/v1`; process health routes remain unversioned.

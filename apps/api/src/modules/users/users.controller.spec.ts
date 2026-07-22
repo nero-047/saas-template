@@ -2,6 +2,8 @@ import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 
+import { RequestContextMiddleware } from '../../common/context/request-context.middleware';
+import { RequestContextService } from '../../common/context/request-context.service';
 import { AuthRuntimeConfigService } from '../auth/auth-runtime-config.service';
 import { AuthService } from '../auth/auth.service';
 import { SessionCookieService } from '../auth/session-cookie.service';
@@ -21,6 +23,8 @@ describe('authenticated current-user request', () => {
       providers: [
         SessionCookieService,
         SessionGuard,
+        RequestContextMiddleware,
+        RequestContextService,
         {
           provide: AuthRuntimeConfigService,
           useValue: {
@@ -38,6 +42,8 @@ describe('authenticated current-user request', () => {
     }).compile();
 
     app = module.createNestApplication();
+    const contextMiddleware = module.get(RequestContextMiddleware);
+    app.use(contextMiddleware.use.bind(contextMiddleware));
     app.setGlobalPrefix('api/v1');
     await app.init();
   });
