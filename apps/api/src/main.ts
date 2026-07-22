@@ -6,7 +6,7 @@ import { loadApiEnvironment } from './config/environment';
 async function bootstrap() {
   const { port } = loadApiEnvironment();
   const app = await NestFactory.create(AppModule);
-  const globalPrefix = 'api';
+  const globalPrefix = 'api/v1';
   app.setGlobalPrefix(globalPrefix, {
     exclude: [
       { path: 'health', method: RequestMethod.GET },

@@ -58,6 +58,58 @@ Dart output will serve Flutter; Python output may serve compute when its API
 boundary needs shared schemas. No generators or generated clients are included
 in the current foundation.
 
+## Identity and tenancy
+
+An organization is the tenant boundary. Workspaces partition activity inside an
+organization, while a membership connects a user to an organization and may be
+restricted to one workspace:
+
+```text
+Organization
+└── Workspace (optional narrower scope)
+    └── Membership
+        └── User
+```
+
+Organization-level memberships have no `workspace_id` and apply across that
+organization. Workspace-level memberships carry both `organization_id` and
+`workspace_id`; a composite foreign key guarantees that the workspace belongs
+to the same organization. A user can hold both kinds of membership. A
+workspace-level membership permits resolving its parent organization for
+context, but does not grant access to sibling workspaces.
+
+Every future tenant-owned domain table must contain `organization_id` and enforce
+that tenant in repository queries. It may additionally contain `workspace_id`
+when the record belongs to a narrower workspace scope. Cross-tenant identifiers
+must be rejected at the data-access boundary rather than filtered only in UI or
+controller code.
+
+## Authentication and authorization
+
+Opaque sessions authenticate users; only hashes of session credentials are
+stored. The current API foundation resolves existing active sessions and can
+revoke them, but intentionally does not issue credentials, hash passwords, or
+implement complete login, OAuth, or JWT flows yet.
+
+Request context is resolved in stages: current user, organization membership,
+then optional workspace membership. Controllers added later should translate
+HTTP input only; context services and repositories enforce tenant ownership.
+
+Authorization is role-based:
+
+```text
+Membership
+└── Role
+    └── Permission
+```
+
+Roles belong to one organization. Permission keys are global capabilities, and
+join-table constraints prevent assigning a role to a membership from another
+organization. Permission checks deny by default and require an explicit key.
+The platform contract reserves `X-Organization-Id` and `X-Workspace-Id` for
+tenant selection and `X-Request-Id` for correlation. Platform HTTP operations
+are versioned under `/api/v1`; process health routes remain unversioned.
+
 ## Compute structure
 
 The `saas_compute` import package keeps HTTP routes in `api/`, configuration and

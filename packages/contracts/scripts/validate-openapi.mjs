@@ -46,4 +46,46 @@ if (
   throw new Error('The OpenAPI components.schemas field must be an object.');
 }
 
+const requiredOperations = {
+  '/auth/login': 'post',
+  '/auth/logout': 'post',
+  '/users/me': 'get',
+  '/organizations/current': 'get',
+  '/workspaces/current': 'get',
+};
+
+for (const [path, method] of Object.entries(requiredOperations)) {
+  if (document.paths[path]?.[method] === undefined) {
+    throw new Error(
+      `The OpenAPI document is missing ${method.toUpperCase()} ${path}.`,
+    );
+  }
+}
+
+const requiredSchemas = [
+  'User',
+  'Organization',
+  'Workspace',
+  'Membership',
+  'Role',
+  'Permission',
+  'Session',
+  'ErrorResponse',
+  'PaginationMeta',
+];
+
+for (const schemaName of requiredSchemas) {
+  if (document.components.schemas[schemaName] === undefined) {
+    throw new Error(
+      `The OpenAPI document is missing the ${schemaName} schema.`,
+    );
+  }
+}
+
+if (document.servers?.[0]?.url !== '/api/v1') {
+  throw new Error(
+    'The OpenAPI document must use /api/v1 as its first server base path.',
+  );
+}
+
 console.log('OpenAPI contract structure is valid.');

@@ -258,6 +258,9 @@ importers:
       '@saas-template/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@saas-template/validation':
+        specifier: workspace:*
+        version: link:../../packages/validation
       reflect-metadata:
         specifier: ^0.2.0
         version: 0.2.2
@@ -411,6 +414,9 @@ importers:
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
 
 packages:
 
