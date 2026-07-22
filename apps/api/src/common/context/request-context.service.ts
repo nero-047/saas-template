@@ -37,6 +37,13 @@ export class RequestContextService {
     return { ...context, permissions: [...context.permissions] };
   }
 
+  getOptional(): RequestContext | undefined {
+    const context = this.storage.getStore();
+    return context
+      ? { ...context, permissions: [...context.permissions] }
+      : undefined;
+  }
+
   setAuthenticatedUser(user: AuthenticatedUser): void {
     const context = this.requireStore();
     context.userId = user.id;

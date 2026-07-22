@@ -1,3 +1,4 @@
+import * as auditLogsSchema from './schema/audit-logs.js';
 import * as membershipsSchema from './schema/memberships.js';
 import * as organizationsSchema from './schema/organizations.js';
 import * as permissionsSchema from './schema/permissions.js';
@@ -7,6 +8,7 @@ import * as sessionsSchema from './schema/sessions.js';
 import * as usersSchema from './schema/users.js';
 import * as workspacesSchema from './schema/workspaces.js';
 
+export * from './schema/audit-logs.js';
 export * from './schema/memberships.js';
 export * from './schema/organizations.js';
 export * from './schema/permissions.js';
@@ -17,6 +19,7 @@ export * from './schema/users.js';
 export * from './schema/workspaces.js';
 
 export const schema = {
+  ...auditLogsSchema,
   ...membershipsSchema,
   ...organizationsSchema,
   ...permissionsSchema,

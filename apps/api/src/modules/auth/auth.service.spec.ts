@@ -1,6 +1,7 @@
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 
 import { InvalidCredentialsException } from '../../common/errors/api-http.exceptions';
+import { AuditLogService } from '../audit/audit-log.service';
 import { AuthService } from './auth.service';
 import { IdentityRepository } from './identity.repository';
 import { PasswordService } from './password.service';
@@ -19,11 +20,16 @@ describe('AuthService', () => {
   };
   const passwords = { hash: jest.fn(), matches: jest.fn() };
   const tokens = { create: jest.fn(), hash: jest.fn() };
+  const auditLogs = {
+    record: jest.fn(),
+    recordForUserOrganizations: jest.fn(),
+  };
   const service = new AuthService(
     identities as unknown as IdentityRepository,
     sessions as unknown as SessionsRepository,
     passwords as unknown as PasswordService,
     tokens as unknown as SessionTokenService,
+    auditLogs as unknown as AuditLogService,
   );
   const createdAt = new Date('2026-01-01T00:00:00.000Z');
   const expiresAt = new Date('2026-02-01T00:00:00.000Z');
@@ -55,6 +61,9 @@ describe('AuthService', () => {
     passwords.hash.mockResolvedValue('argon2-password-hash');
     identities.register.mockResolvedValue({
       user,
+      organization: { id: 'organization-id' },
+      membership: { id: 'membership-id' },
+      ownerRole: { id: 'owner-role-id', key: 'owner' },
       session: { expiresAt },
     });
 
@@ -90,6 +99,21 @@ describe('AuthService', () => {
       token: 'raw-session-token',
       expiresAt,
     });
+    expect(auditLogs.record).toHaveBeenCalledTimes(3);
+    expect(auditLogs.record.mock.calls.map(([event]) => event.action)).toEqual([
+      'USER_REGISTERED',
+      'ORGANIZATION_CREATED',
+      'ROLE_ASSIGNED',
+    ]);
+    expect(auditLogs.record).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        organizationId: 'organization-id',
+        userId: 'user-id',
+        resourceId: 'membership-id',
+        metadata: { roleId: 'owner-role-id', roleKey: 'owner' },
+      }),
+    );
   });
 
   it('rejects a duplicate normalized email', async () => {
@@ -126,6 +150,12 @@ describe('AuthService', () => {
       }),
     );
     expect(result.token).toBe('raw-session-token');
+    expect(auditLogs.recordForUserOrganizations).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-id',
+        action: 'USER_LOGIN',
+      }),
+    );
   });
 
   it('uses the same invalid-credentials response for a wrong password', async () => {
@@ -177,5 +207,12 @@ describe('AuthService', () => {
     await service.logout({ id: 'user-id', sessionId: 'session-id' }, createdAt);
 
     expect(sessions.revoke).toHaveBeenCalledWith('session-id', createdAt);
+    expect(auditLogs.recordForUserOrganizations).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-id',
+        action: 'USER_LOGOUT',
+        resourceId: 'session-id',
+      }),
+    );
   });
 });

@@ -255,6 +255,12 @@ jobs:
             group by organization_id, key
             having count(*) > 1
           `;
+          const [permissionAuditCount] = await sql`
+            select count(*)::int as count
+            from audit_logs
+            where organization_id = ${organizationId}
+              and action = 'PERMISSION_CHANGED'
+          `;
 
           assert.equal(permissionCount.count, 17);
           assert.deepEqual(
@@ -263,5 +269,6 @@ jobs:
           );
           assert.equal(duplicatePermissions.length, 0);
           assert.equal(duplicateRoles.length, 0);
+          assert.equal(permissionAuditCount.count, 3);
           await sql.end();
           NODE

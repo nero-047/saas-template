@@ -14,6 +14,7 @@ class InMemoryRbacSeedStore implements RbacSeedStore {
   readonly permissions = new Map<string, SeedPermissionRecord>();
   readonly roles = new Map<string, SeedRoleRecord>();
   readonly grants = new Map<string, Set<string>>();
+  readonly permissionChanges: string[] = [];
 
   constructor(private readonly organizationIds: readonly string[]) {}
 
@@ -55,8 +56,9 @@ class InMemoryRbacSeedStore implements RbacSeedStore {
     roleId: string,
     platformPermissionIds: readonly string[],
     grantedPermissionIds: readonly string[],
-  ): Promise<void> {
+  ): Promise<boolean> {
     const grants = this.grants.get(roleId) ?? new Set<string>();
+    const before = [...grants].sort();
     const platformIds = new Set(platformPermissionIds);
     for (const permissionId of grants) {
       if (
@@ -70,6 +72,14 @@ class InMemoryRbacSeedStore implements RbacSeedStore {
       grants.add(permissionId);
     }
     this.grants.set(roleId, grants);
+    return JSON.stringify(before) !== JSON.stringify([...grants].sort());
+  }
+
+  async recordPermissionChange(
+    organizationId: string,
+    role: SeedRoleRecord,
+  ): Promise<void> {
+    this.permissionChanges.push(`${organizationId}:${role.key}`);
   }
 
   async listOrganizationIds(): Promise<readonly string[]> {
@@ -118,6 +128,7 @@ describe('RBAC seed', () => {
         roleId,
         [...grants],
       ]),
+      permissionChanges: [...store.permissionChanges],
     };
     await seedRbacWithStore(store, now);
 
@@ -128,7 +139,21 @@ describe('RBAC seed', () => {
         roleId,
         [...grants],
       ]),
+      permissionChanges: [...store.permissionChanges],
     }).toEqual(firstState);
+  });
+
+  it('records permission changes only when platform grants change', async () => {
+    const store = new InMemoryRbacSeedStore(['organization-a']);
+
+    await seedRbacWithStore(store, now);
+    await seedRbacWithStore(store, now);
+
+    expect(store.permissionChanges).toEqual([
+      'organization-a:owner',
+      'organization-a:admin',
+      'organization-a:member',
+    ]);
   });
 
   it('grants every platform permission to Owner', async () => {

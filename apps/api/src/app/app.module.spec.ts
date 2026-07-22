@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { RequestContextService } from '../common/context/request-context.service';
 import { TenantContextService } from '../common/context/tenant-context.service';
 import { AuthService } from '../modules/auth/auth.service';
+import { AuditLogService } from '../modules/audit/audit-log.service';
 import { DatabaseService } from '../modules/database/database.service';
 import { OrganizationsService } from '../modules/organizations/organizations.service';
 import { PermissionsService } from '../modules/permissions/permissions.service';
@@ -20,6 +21,7 @@ describe('AppModule identity foundation', () => {
 
     expect(app.get(DatabaseService)).toBeDefined();
     expect(app.get(AuthService)).toBeDefined();
+    expect(app.get(AuditLogService)).toBeDefined();
     expect(app.get(UsersService)).toBeDefined();
     expect(app.get(OrganizationsService)).toBeDefined();
     expect(app.get(WorkspacesService)).toBeDefined();

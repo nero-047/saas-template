@@ -1,5 +1,6 @@
 import { relations } from 'drizzle-orm';
 
+import { auditLogs } from './audit-logs.js';
 import { memberships } from './memberships.js';
 import { organizations } from './organizations.js';
 import { permissions, rolePermissions } from './permissions.js';
@@ -9,17 +10,20 @@ import { users } from './users.js';
 import { workspaces } from './workspaces.js';
 
 export const usersRelations = relations(users, ({ many }) => ({
+  auditLogs: many(auditLogs),
   memberships: many(memberships),
   sessions: many(sessions),
 }));
 
 export const organizationsRelations = relations(organizations, ({ many }) => ({
+  auditLogs: many(auditLogs),
   workspaces: many(workspaces),
   memberships: many(memberships),
   roles: many(roles),
 }));
 
 export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
+  auditLogs: many(auditLogs),
   organization: one(organizations, {
     fields: [workspaces.organizationId],
     references: [organizations.id],
@@ -87,6 +91,21 @@ export const rolePermissionsRelations = relations(
 export const sessionsRelations = relations(sessions, ({ one }) => ({
   user: one(users, {
     fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [auditLogs.organizationId],
+    references: [organizations.id],
+  }),
+  workspace: one(workspaces, {
+    fields: [auditLogs.workspaceId],
+    references: [workspaces.id],
+  }),
+  user: one(users, {
+    fields: [auditLogs.userId],
     references: [users.id],
   }),
 }));

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { RequestContextModule } from '../../common/context/request-context.module';
+import { AuditModule } from '../audit/audit.module';
 import { AuthController } from './auth.controller';
 import { AuthRuntimeConfigService } from './auth-runtime-config.service';
 import { AuthService } from './auth.service';
@@ -12,7 +13,7 @@ import { SessionTokenService } from './session-token.service';
 import { SessionsRepository } from './sessions.repository';
 
 @Module({
-  imports: [RequestContextModule],
+  imports: [RequestContextModule, AuditModule],
   controllers: [AuthController],
   providers: [
     AuthRuntimeConfigService,

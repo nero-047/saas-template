@@ -193,6 +193,35 @@ the repeatable `db:seed` reconciles platform permissions, system roles, and
 explicit grants. This separation keeps migrations immutable and makes seed
 data safe to reapply in each environment.
 
+## Audit logging
+
+`audit_logs` is an organization-scoped, append-only record of security and
+platform actions. Rows may optionally retain the workspace, actor, resource,
+request ID, and sanitized JSON metadata that existed when the action occurred.
+The database model has no update timestamp, the audit repository exposes no
+update or delete operation, and tenant-aware queries always include the
+organization selected in request context.
+
+```text
+request
+   ↓
+request / tenant context
+   ↓
+platform action
+   ↓
+immutable audit record
+```
+
+The initial catalogue is limited to authentication, organization creation,
+role assignment, and permission-grant changes. Login and logout happen before
+tenant selection, so they are recorded once for each distinct organization in
+which the actor has membership rather than choosing a default tenant. Metadata
+is recursively sanitized and bounded by size; password, token, cookie,
+authorization, credential, API-key, and secret fields are removed recursively.
+Future modules define namespaced actions at the point where their transactional
+behavior is implemented; audit rows must never contain request bodies or raw
+credentials.
+
 The platform contract reserves `X-Organization-Id` and `X-Workspace-Id` for
 tenant selection and `X-Request-Id` for correlation. Platform HTTP operations
 are versioned under `/api/v1`; process health routes remain unversioned.

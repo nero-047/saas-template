@@ -1,6 +1,8 @@
 import { and, asc, eq, inArray, notInArray, sql } from 'drizzle-orm';
 
+import { PLATFORM_AUDIT_ACTIONS } from '../audit/catalogue.js';
 import type { Database } from '../client.js';
+import { auditLogs } from '../schema/audit-logs.js';
 import { organizations } from '../schema/organizations.js';
 import { permissions, rolePermissions } from '../schema/permissions.js';
 import { roles } from '../schema/roles.js';
@@ -35,6 +37,12 @@ export interface RbacSeedStore {
     roleId: string,
     platformPermissionIds: readonly string[],
     grantedPermissionIds: readonly string[],
+    now: Date,
+  ): Promise<boolean>;
+  recordPermissionChange(
+    organizationId: string,
+    role: SeedRoleRecord,
+    permissionKeys: readonly string[],
     now: Date,
   ): Promise<void>;
   listOrganizationIds(): Promise<readonly string[]>;
@@ -85,12 +93,20 @@ async function seedRolesForOrganization(
     const grantedPermissionIds = definition.permissions.map(
       (key) => requiredRecord(permissionByKey, key).id,
     );
-    await store.reconcilePlatformGrants(
+    const changed = await store.reconcilePlatformGrants(
       role.id,
       platformPermissionIds,
       grantedPermissionIds,
       now,
     );
+    if (changed) {
+      await store.recordPermissionChange(
+        organizationId,
+        role,
+        definition.permissions,
+        now,
+      );
+    }
   }
 
   return {
@@ -213,9 +229,10 @@ class DrizzleRbacSeedStore implements RbacSeedStore {
     platformPermissionIds: readonly string[],
     grantedPermissionIds: readonly string[],
     now: Date,
-  ): Promise<void> {
+  ): Promise<boolean> {
+    let removedCount = 0;
     if (platformPermissionIds.length > grantedPermissionIds.length) {
-      await this.database
+      const removed = await this.database
         .delete(rolePermissions)
         .where(
           and(
@@ -223,10 +240,12 @@ class DrizzleRbacSeedStore implements RbacSeedStore {
             inArray(rolePermissions.permissionId, [...platformPermissionIds]),
             notInArray(rolePermissions.permissionId, [...grantedPermissionIds]),
           ),
-        );
+        )
+        .returning({ permissionId: rolePermissions.permissionId });
+      removedCount = removed.length;
     }
 
-    await this.database
+    const added = await this.database
       .insert(rolePermissions)
       .values(
         grantedPermissionIds.map((permissionId) => ({
@@ -237,7 +256,26 @@ class DrizzleRbacSeedStore implements RbacSeedStore {
       )
       .onConflictDoNothing({
         target: [rolePermissions.roleId, rolePermissions.permissionId],
-      });
+      })
+      .returning({ permissionId: rolePermissions.permissionId });
+
+    return removedCount > 0 || added.length > 0;
+  }
+
+  async recordPermissionChange(
+    organizationId: string,
+    role: SeedRoleRecord,
+    permissionKeys: readonly string[],
+    now: Date,
+  ): Promise<void> {
+    await this.database.insert(auditLogs).values({
+      organizationId,
+      action: PLATFORM_AUDIT_ACTIONS.PERMISSION_CHANGED,
+      resourceType: 'role',
+      resourceId: role.id,
+      metadata: { roleKey: role.key, permissionKeys },
+      createdAt: now,
+    });
   }
 
   async listOrganizationIds(): Promise<readonly string[]> {

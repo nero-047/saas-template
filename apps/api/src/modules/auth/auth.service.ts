@@ -6,6 +6,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { PLATFORM_AUDIT_ACTIONS } from '@saas-template/db';
 import {
   loginRequestSchema,
   registerRequestSchema,
@@ -15,6 +16,7 @@ import {
 } from '@saas-template/validation';
 
 import { InvalidCredentialsException } from '../../common/errors/api-http.exceptions';
+import { AuditLogService } from '../audit/audit-log.service';
 import type { CurrentUser } from './current-user';
 import { DuplicateEmailError, IdentityRepository } from './identity.repository';
 import { PasswordService } from './password.service';
@@ -80,6 +82,7 @@ export class AuthService {
     private readonly sessions: SessionsRepository,
     private readonly passwords: PasswordService,
     private readonly tokens: SessionTokenService,
+    private readonly auditLogs: AuditLogService,
   ) {}
 
   async register(input: unknown): Promise<EstablishedAuthentication> {
@@ -105,6 +108,35 @@ export class AuthService {
         tokenHash: credential.tokenHash,
         expiresAt: credential.expiresAt,
         now,
+      });
+
+      await this.auditLogs.record({
+        organizationId: result.organization.id,
+        userId: result.user.id,
+        action: PLATFORM_AUDIT_ACTIONS.USER_REGISTERED,
+        resourceType: 'user',
+        resourceId: result.user.id,
+        createdAt: now,
+      });
+      await this.auditLogs.record({
+        organizationId: result.organization.id,
+        userId: result.user.id,
+        action: PLATFORM_AUDIT_ACTIONS.ORGANIZATION_CREATED,
+        resourceType: 'organization',
+        resourceId: result.organization.id,
+        createdAt: now,
+      });
+      await this.auditLogs.record({
+        organizationId: result.organization.id,
+        userId: result.user.id,
+        action: PLATFORM_AUDIT_ACTIONS.ROLE_ASSIGNED,
+        resourceType: 'membership',
+        resourceId: result.membership.id,
+        metadata: {
+          roleId: result.ownerRole.id,
+          roleKey: result.ownerRole.key,
+        },
+        createdAt: now,
       });
 
       return {
@@ -142,6 +174,13 @@ export class AuthService {
       expiresAt: credential.expiresAt,
       now,
     });
+    await this.auditLogs.recordForUserOrganizations({
+      userId: user.id,
+      action: PLATFORM_AUDIT_ACTIONS.USER_LOGIN,
+      resourceType: 'user',
+      resourceId: user.id,
+      createdAt: now,
+    });
 
     return {
       response: toAuthResponse(user, session.expiresAt),
@@ -169,5 +208,12 @@ export class AuthService {
     now: Date = new Date(),
   ): Promise<void> {
     await this.sessions.revoke(currentUser.sessionId, now);
+    await this.auditLogs.recordForUserOrganizations({
+      userId: currentUser.id,
+      action: PLATFORM_AUDIT_ACTIONS.USER_LOGOUT,
+      resourceType: 'session',
+      resourceId: currentUser.sessionId,
+      createdAt: now,
+    });
   }
 }
