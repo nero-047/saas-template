@@ -71,6 +71,17 @@ imports or private subpaths.
 `packages/ui` is a React TypeScript library and must remain independent of
 Next.js so it can be consumed by every frontend application.
 
+## Configuration boundaries
+
+Runtime configuration is owned and validated by the consuming application.
+Server-only values never use `NEXT_PUBLIC_`; that prefix is reserved for values
+intentionally embedded in browser bundles at Next.js build time. The root
+dotenv example belongs to shared local infrastructure, while useful app-level
+examples live beside their applications. Builds remain independent of runtime
+secrets, and database configuration stays lazy until a server process first
+creates a database client. Detailed precedence and container injection rules
+are documented in `ENVIRONMENT.md`.
+
 ## Deployment images
 
 API and worker deployment contexts are produced by Nx's lockfile pruning and

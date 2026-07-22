@@ -38,6 +38,23 @@ when PostgreSQL is down. `GET /ready` is the traffic-readiness check: it probes
 PostgreSQL with a lightweight query and returns HTTP 503 with a safe status body
 when the database is unavailable.
 
+## Environment setup
+
+Environment configuration is intentionally application-owned. For local
+infrastructure and the services that currently consume settings:
+
+```sh
+cp .env.example .env
+cp apps/api/.env.example apps/api/.env.local
+cp apps/compute/.env.example apps/compute/.env.local
+```
+
+The root file configures local Compose services; the API and compute files are
+server-only application settings. Worker, web, marketing, and admin do not have
+example files because they currently consume no application variables. See
+[ENVIRONMENT.md](./ENVIRONMENT.md) for precedence, browser/build-time rules,
+validation timing, and container injection.
+
 ## Python compute service
 
 `apps/compute` is the Python 3.13 runtime for specialised processing workloads.

@@ -27,7 +27,8 @@ The service listens on port 8000 and exposes only:
 Configuration uses environment variables prefixed with `COMPUTE_`, such as
 `COMPUTE_ENVIRONMENT=development`. Environment settings are loaded when the
 ASGI application is created to start the service, not when the package itself
-is imported.
+is imported. For direct local execution, copy `.env.example` to `.env.local`;
+process environment values take precedence over that file.
 
 ## Verification
 

@@ -9,6 +9,8 @@ class Settings(BaseSettings):
         env_prefix="COMPUTE_",
         case_sensitive=False,
         extra="ignore",
+        env_file=(".env", ".env.local"),
+        env_file_encoding="utf-8",
     )
 
     service_name: str = "compute"

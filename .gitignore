@@ -19,6 +19,7 @@ __pycache__/
 # environment files
 .env
 .env.*
+.*.env
 !.env.example
 !**/.env.example
 
