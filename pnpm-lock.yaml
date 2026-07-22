@@ -397,6 +397,33 @@ importers:
         specifier: ~3.6.2
         version: 3.6.2
 
+  packages/cli:
+    dependencies:
+      '@saas-template/config':
+        specifier: workspace:*
+        version: link:../config
+      '@saas-template/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@saas-template/validation':
+        specifier: workspace:*
+        version: link:../validation
+      jiti:
+        specifier: 2.7.0
+        version: 2.7.0
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+
+  packages/config:
+    dependencies:
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+
   packages/contracts:
     devDependencies:
       yaml:

@@ -38,6 +38,12 @@
     },
     {
       "path": "./apps/rn"
+    },
+    {
+      "path": "./packages/config"
+    },
+    {
+      "path": "./packages/cli"
     }
   ]
 }

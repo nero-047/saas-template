@@ -320,6 +320,41 @@ When API contracts are mature, Dart models and clients will be generated from a
 language-neutral API definition so TypeScript and Dart remain separate runtime
 boundaries.
 
+## Nero CLI Architecture
+
+The developer-platform lifecycle is intentionally split:
+
+```text
+create-nero-saas
+        ↓ creates
+Nero SaaS Project
+        ↓ contains
+project-local nero CLI
+        ↓ eventually manages
+development · build · database · generation · deployment
+```
+
+`packages/config` owns the framework-neutral project description, strict Zod
+schema, conservative defaults, and in-memory parsing helpers. The selected
+`nero.config.ts` format provides comments, imported types, and editor completion
+through `defineConfig`, while runtime validation rejects unknown or malformed
+values. Configuration defaults describe a blank project so an initializer must
+record every selected application, feature, and platform capability explicitly.
+
+`packages/cli` is a Node-only internal runtime, separate from every deployable
+application. It loads the trusted project-local configuration, registers
+commands, inspects workspace state, and formats terminal output. Applications
+are forbidden from depending on the CLI. The future `create-nero-saas` package
+will be a separate npm initializer rather than coupling project creation to the
+runtime embedded in generated projects. Its isolated `jiti` loader handles the
+TypeScript configuration without changing application or root module semantics.
+
+Only `nero info` and the read-only `nero doctor` diagnostic exist today. Future
+development, build, database, generation, and deployment commands use
+positional arguments. Deployment is deferred because provider and release
+requirements are not yet defined; the current CLI contains no cloud or
+deployment implementation.
+
 ## Configuration boundaries
 
 Runtime configuration is owned and validated by the consuming application.

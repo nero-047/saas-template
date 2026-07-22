@@ -227,6 +227,39 @@ and restores request/user/organization/workspace correlation context before a
 processor runs. The current processors are transport placeholders and do not
 send email or notifications.
 
+## Nero CLI foundation
+
+`nero.config.ts` is the typed, strictly validated description of this Nero SaaS
+project. It records project metadata, architecture, selected applications,
+platform capabilities, and enabled foundation features without importing an
+application framework. Inspect the current project or run read-only local
+diagnostics with:
+
+```sh
+pnpm nero info
+pnpm nero doctor
+```
+
+The project-local runtime lives in `packages/cli`; applications cannot import
+it. The future `create-nero-saas` npm initializer will create a project that
+contains this CLI, while the local CLI will eventually orchestrate development,
+build, database, generation, and deployment commands. Those commands are only
+documented today—no initializer, generator, or deployment implementation is
+included.
+
+Future commands use positional arguments:
+
+```text
+nero dev
+nero dev api
+nero build
+nero build web
+nero db migrate
+nero db seed
+nero generate module
+nero deploy docker
+```
+
 ## Add new projects
 
 While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.

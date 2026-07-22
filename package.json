@@ -4,6 +4,7 @@
   "license": "MIT",
   "packageManager": "pnpm@11.10.0",
   "scripts": {
+    "nero": "pnpm nx run cli:build --outputStyle=static && node packages/cli/dist/bin.js",
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down",
     "db:check": "nx run db:check",

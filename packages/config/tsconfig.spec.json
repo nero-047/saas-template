@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/jest",
+    "types": ["jest", "node"],
+    "emitDeclarationOnly": false
+  },
+  "include": ["jest.config.cts", "src/**/*.spec.ts", "src/**/*.d.ts"],
+  "references": [{ "path": "./tsconfig.lib.json" }]
+}

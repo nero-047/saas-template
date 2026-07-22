@@ -95,6 +95,14 @@ export default [
                             onlyDependOnLibsWithTags: [
                                 "type:jobs"
                             ]
+                        },
+                        {
+                            sourceTag: "scope:cli",
+                            onlyDependOnLibsWithTags: [
+                                "scope:config",
+                                "type:shared",
+                                "type:validation"
+                            ]
                         }
                     ]
                 }
