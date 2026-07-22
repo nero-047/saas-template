@@ -1,0 +1,111 @@
+name: Flutter
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/flutter.yml'
+      - '.github/workflows/ci.yml'
+      - '.node-version'
+      - 'apps/flutter/**'
+      - 'nx.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/flutter.yml'
+      - '.github/workflows/ci.yml'
+      - '.node-version'
+      - 'apps/flutter/**'
+      - 'nx.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flutter-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: 'true'
+  NX_DAEMON: 'false'
+  NX_TASKS_RUNNER_DYNAMIC_OUTPUT: 'false'
+
+jobs:
+  validate:
+    name: Flutter quality and Android build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+          cache-dependency-path: |
+            apps/flutter/android/**/*.gradle*
+            apps/flutter/android/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Set up pinned Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version-file: apps/flutter/pubspec.yaml
+          cache: true
+
+      - name: Activate repository pnpm version
+        shell: bash
+        run: |
+          package_manager=$(node -p "require('./package.json').packageManager")
+          if [[ "$package_manager" != pnpm@* ]]; then
+            echo "Expected packageManager to declare pnpm" >&2
+            exit 1
+          fi
+          corepack enable
+          corepack install --global "$package_manager"
+
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install locked Flutter dependencies
+        working-directory: apps/flutter
+        run: flutter pub get --enforce-lockfile
+
+      - name: Install Flutter Android SDK components
+        shell: bash
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358"
+
+      - name: Check Nx synchronization
+        run: pnpm nx sync:check
+
+      - name: Validate Flutter source and bundle
+        run: pnpm nx run-many -t format-check analyze test build-validation -p flutter --skip-nx-cache --outputStyle=static
+
+      - name: Build Android debug application
+        run: pnpm nx run flutter:build-android --skip-nx-cache --outputStyle=static
+
+      - name: Verify generated files are ignored
+        shell: bash
+        run: |
+          git diff --exit-code
+          status=$(git status --porcelain=v1 --untracked-files=all)
+          if [[ -n "$status" ]]; then
+            echo "$status"
+            exit 1
+          fi

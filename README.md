@@ -116,6 +116,26 @@ code may use the portable `shared`, `validation`, and `api-client` packages when
 their public contracts are native-safe; it must not import the web-only `ui`
 package.
 
+## Flutter application
+
+`apps/flutter` is an isolated Flutter mobile shell with Android and iOS native
+projects. Flutter 3.44.6 is pinned in its `pubspec.yaml`; the project is not a
+pnpm workspace package, while Nx still orchestrates its checks and builds.
+
+Install its locked Dart dependencies and run validation from the repository
+root:
+
+```sh
+(cd apps/flutter && flutter pub get --enforce-lockfile)
+pnpm nx run-many -t format-check analyze test build-validation -p flutter
+pnpm nx run flutter:build-android
+pnpm nx run flutter:build-ios
+```
+
+The iOS build requires macOS and Xcode. Flutter code does not import TypeScript
+workspace packages; future Dart API contracts will be generated from a
+language-neutral API description.
+
 ## Production containers
 
 Each deployable application has an independent production image. Build them
@@ -174,6 +194,10 @@ project configuration validation, then builds Android in an isolated job with
 the required JDK and Android SDK. This keeps the main CI workflow independent of
 mobile SDK setup. Native iOS compilation remains a macOS developer or release
 pipeline responsibility.
+
+Flutter has its own path-filtered workflow that installs the pinned SDK, runs
+its Nx quality and bundle targets, and builds Android. The main monorepo job
+explicitly excludes Flutter so unrelated CI does not provision its SDK.
 
 The separate Docker workflow validates `compose.yaml`, starts and checks
 PostgreSQL and Redis, builds all six deployable application images, inspects

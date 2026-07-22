@@ -132,10 +132,11 @@ jobs:
             pnpm nx affected -t "${targets[@]}" \
               --base="$NX_BASE" \
               --head="$NX_HEAD" \
+              --exclude=flutter \
               --outputStyle=static
           else
             echo "Affected SHAs unavailable; running all applicable project targets"
-            pnpm nx run-many -t "${targets[@]}" --all --outputStyle=static
+            pnpm nx run-many -t "${targets[@]}" --all --exclude=flutter --outputStyle=static
           fi
 
       - name: Verify offline Drizzle generation

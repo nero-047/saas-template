@@ -25,6 +25,11 @@ projects. Nx's official React Native plugin orchestrates Metro, native builds,
 tests, and platform tooling. The application starts as a minimal shell without
 navigation, authentication, or product-specific modules.
 
+The Flutter client lives in `apps/flutter` and also owns checked-in Android and
+iOS projects. It is an Nx application for orchestration but not a pnpm workspace
+package. Desktop and web targets remain absent from the blank foundation to
+avoid maintaining unused native surfaces.
+
 ## Service responsibilities
 
 The NestJS API owns authentication, authorization, CRUD, transactional business
@@ -82,6 +87,11 @@ contains web React components. It may consume the portable public APIs of
 runtime assumptions are valid on React Native. The initial shell deliberately
 has no workspace-package dependencies.
 
+Flutter does not import TypeScript packages or duplicate their implementation.
+When API contracts are mature, Dart models and clients will be generated from a
+language-neutral API definition so TypeScript and Dart remain separate runtime
+boundaries.
+
 ## Configuration boundaries
 
 Runtime configuration is owned and validated by the consuming application.
@@ -133,3 +143,8 @@ React Native lint, type-check, and test targets, validates the checked-in iOS
 configuration on Linux, and builds an Android debug application in a dedicated
 job. Linux CI does not claim to compile iOS; a future macOS release workflow can
 own Xcode compilation and signing when distribution requirements exist.
+
+Flutter validation runs in its own path-filtered workflow with the exact SDK
+version declared by the app. It owns Dart formatting, analysis, tests, generic
+bundle validation, and an Android debug build. Main CI excludes the Flutter
+project, and iOS compilation remains a macOS responsibility.

@@ -1,0 +1,76 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "flutter",
+  "projectType": "application",
+  "sourceRoot": "apps/flutter/lib",
+  "tags": ["type:app", "scope:flutter", "platform:flutter"],
+  "targets": {
+    "format-check": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "parallelism": false,
+      "options": {
+        "command": "dart format --output=none --set-exit-if-changed .",
+        "cwd": "apps/flutter"
+      }
+    },
+    "analyze": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "parallelism": false,
+      "options": {
+        "command": "flutter analyze --fatal-infos --fatal-warnings",
+        "cwd": "apps/flutter"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "parallelism": false,
+      "options": {
+        "command": "flutter test",
+        "cwd": "apps/flutter"
+      }
+    },
+    "run": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "continuous": true,
+      "parallelism": false,
+      "options": {
+        "command": "flutter run",
+        "cwd": "apps/flutter"
+      }
+    },
+    "build-validation": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "parallelism": false,
+      "outputs": ["{projectRoot}/build/flutter_assets"],
+      "options": {
+        "command": "flutter build bundle --debug",
+        "cwd": "apps/flutter"
+      }
+    },
+    "build-android": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "parallelism": false,
+      "outputs": ["{projectRoot}/build/app/outputs/flutter-apk"],
+      "options": {
+        "command": "flutter build apk --debug",
+        "cwd": "apps/flutter"
+      }
+    },
+    "build-ios": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "parallelism": false,
+      "outputs": ["{projectRoot}/build/ios"],
+      "options": {
+        "command": "flutter build ios --debug --no-codesign",
+        "cwd": "apps/flutter"
+      }
+    }
+  }
+}
