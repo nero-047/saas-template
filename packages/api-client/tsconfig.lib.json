@@ -6,8 +6,10 @@
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": false,
     "forceConsistentCasingInFileNames": true,
+    "lib": ["es2022", "dom", "dom.iterable"],
     "types": []
   },
   "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts"],
   "references": []
 }

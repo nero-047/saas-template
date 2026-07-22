@@ -93,6 +93,12 @@ jobs:
       - name: Check Nx synchronization
         run: pnpm nx sync:check
 
+      - name: Validate API contract and generated TypeScript client
+        run: |
+          pnpm nx run contracts:validate --skip-nx-cache --outputStyle=static
+          pnpm nx run api-client:check-generated --skip-nx-cache --outputStyle=static
+          pnpm nx run-many -t lint typecheck test build -p api-client --skip-nx-cache --outputStyle=static
+
       - name: Check TypeScript formatting
         run: pnpm exec prettier --check "**/*.{ts,tsx}"
 

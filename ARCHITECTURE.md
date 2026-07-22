@@ -54,10 +54,22 @@ language-neutral OpenAPI definition of that public HTTP surface; it does not own
 framework code, persistence, or business implementation.
 
 Clients consume generated contracts rather than redefining request and response
-shapes by hand. Future TypeScript output will serve web, admin, and React Native;
-Dart output will serve Flutter; Python output may serve compute when its API
-boundary needs shared schemas. No generators or generated clients are included
-in the current foundation.
+shapes by hand. The flow is one-way:
+
+```text
+OpenAPI source
+├── committed TypeScript types → framework-neutral fetch client → web/admin/RN
+├── future Dart package → Flutter
+└── future Python models → compute, only when its boundary requires them
+```
+
+`@hey-api/openapi-ts` is pinned in `packages/api-client`; deterministic generated
+types are committed and checked for freshness in CI. The handwritten fetch
+runtime contains transport behavior only and depends on those generated types.
+It does not own schemas, session tokens, retries, application state, or UI
+hooks. Dart generation is deferred until Flutter needs the API, with a pinned
+OpenAPI Generator evaluation workflow documented under
+`packages/contracts/generators/dart`. Python generation remains deferred.
 
 ## Identity and tenancy
 
@@ -299,8 +311,9 @@ Next.js so it can be consumed by every frontend application.
 React Native is a separate UI platform and must not import `packages/ui`, which
 contains web React components. It may consume the portable public APIs of
 `shared`, `validation`, and `api-client` only after their dependencies and
-runtime assumptions are valid on React Native. The initial shell deliberately
-has no workspace-package dependencies.
+runtime assumptions are valid on React Native. The framework-neutral
+`api-client` is declared for future generated-contract consumers, but the
+initial shell does not call it.
 
 Flutter does not import TypeScript packages or duplicate their implementation.
 When API contracts are mature, Dart models and clients will be generated from a

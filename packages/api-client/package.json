@@ -19,9 +19,57 @@
     "name": "api-client",
     "tags": [
       "type:api-client"
-    ]
+    ],
+    "implicitDependencies": [
+      "contracts"
+    ],
+    "targets": {
+      "generate": {
+        "executor": "nx:run-commands",
+        "cache": false,
+        "dependsOn": [
+          "^validate"
+        ],
+        "outputs": [
+          "{projectRoot}/src/generated/openapi.ts"
+        ],
+        "options": {
+          "command": "node scripts/generate.mjs",
+          "cwd": "packages/api-client"
+        }
+      },
+      "check-generated": {
+        "executor": "nx:run-commands",
+        "cache": true,
+        "dependsOn": [
+          "^validate"
+        ],
+        "inputs": [
+          "{projectRoot}/scripts/generate.mjs",
+          "{projectRoot}/src/generated/openapi.ts",
+          "{workspaceRoot}/packages/contracts/openapi/openapi.yaml",
+          "{workspaceRoot}/pnpm-lock.yaml"
+        ],
+        "options": {
+          "command": "node scripts/generate.mjs --check",
+          "cwd": "packages/api-client"
+        }
+      },
+      "test": {
+        "dependsOn": [
+          "^build"
+        ],
+        "options": {
+          "passWithNoTests": false
+        }
+      }
+    }
   },
   "dependencies": {
     "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "0.99.0",
+    "prettier": "~3.6.2"
   }
 }

@@ -26,6 +26,7 @@
     }
   },
   "dependencies": {
+    "@saas-template/api-client": "workspace:*",
     "react": "^19.0.0",
     "react-native": "~0.84.1"
   },

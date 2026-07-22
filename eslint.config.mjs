@@ -59,7 +59,8 @@ export default [
                             onlyDependOnLibsWithTags: [
                                 "type:shared",
                                 "type:validation",
-                                "type:api-client"
+                                "type:api-client",
+                                "scope:contracts"
                             ]
                         },
                         {

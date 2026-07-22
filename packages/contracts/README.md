@@ -1,46 +1,48 @@
 # API contracts
 
-`@saas-template/contracts` is the framework-neutral source of truth for public
-HTTP API definitions. The canonical source is `openapi/openapi.yaml`; application
-frameworks and database models do not define cross-language contracts.
+`@saas-template/contracts` is the framework-neutral source of truth for the
+public HTTP API. The canonical source is `openapi/openapi.yaml`; application
+frameworks, database models, and generated clients do not define the contract.
 
-The NestJS API implements the operations defined here while retaining ownership
-of business logic, authorization decisions, and runtime behavior.
+The NestJS API implements the operations while retaining ownership of business
+logic, authorization, and runtime behavior. The current contract covers only
+the platform identity and tenancy foundation. Password hashes and opaque
+session credentials never appear in it.
 
-The initial platform contract defines email/password registration and login,
-opaque cookie sessions, and current user, organization, and workspace
-operations. Raw session credentials and password hashes never appear in the
-contract. CRM, billing, and product-specific resources remain absent.
+Major API versions are encoded in the server base path, beginning with
+`/api/v1`. Clients may send `X-Request-Id`; responses return the accepted or
+generated request identifier. Failures use the standard `ErrorResponse`
+envelope.
 
-Major API versions are encoded in the server base path, beginning with `/api/v1`.
-Clients may send `X-Request-Id`; every documented response returns the accepted
-or generated request identifier. Errors use the shared `ErrorResponse` envelope.
+## Validation
 
-## Consumers
-
-Future generated artifacts may be consumed by:
-
-- TypeScript clients for `web`, `admin`, and `rn`.
-- Dart clients and models for `flutter`.
-- Python models for `compute` only when its HTTP boundary requires shared API
-  schemas.
-
-Generated clients must not be edited as source-of-truth files. Each language
-will consume generated output appropriate to its own runtime; Flutter and
-compute will not import TypeScript packages.
-
-## Generation foundation
-
-Generator implementations are intentionally absent. Future generator selection
-must define reproducible versions, deterministic output locations, compatibility
-with OpenAPI 3.1, and CI checks that generated files are current. Configuration
-will live under `generators/` once those decisions are justified.
-
-The only current tooling is a YAML parser used by the Nx `typecheck` target for
-baseline OpenAPI structure validation. It does not generate metadata, clients,
-servers, documentation, or application code.
+Validate the OpenAPI structure and the documented Dart-generation subset with:
 
 ```sh
+pnpm nx run contracts:validate
 pnpm nx run contracts:lint
-pnpm nx run contracts:typecheck
 ```
+
+Validation is offline and does not start an API, contact a database, or require
+runtime secrets.
+
+## Generated consumers
+
+- TypeScript types and the small fetch client live in `packages/api-client` for
+  web, admin, and React Native consumers. Generated TypeScript is
+  committed so application builds do not need generator tooling.
+- A future Dart client for Flutter will be generated into
+  `apps/flutter/packages/saas_api_client`. It is intentionally not generated or
+  added to Flutter dependencies yet.
+- Python models may be generated for compute only when an actual compute HTTP
+  boundary needs these schemas. No Python client is generated today.
+
+Change the OpenAPI source first, regenerate TypeScript, review the semantic and
+generated diffs together, and run the freshness check:
+
+```sh
+pnpm nx run api-client:generate
+pnpm nx run api-client:check-generated
+```
+
+Never edit `packages/api-client/src/generated/openapi.ts` by hand.

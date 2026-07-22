@@ -1,1 +1,31 @@
-export {};
+export {
+  ApiClientError,
+  ApiProtocolError,
+  createApiClient,
+  type ApiClient,
+  type ApiClientOptions,
+  type ApiHeaders,
+  type ApiResult,
+  type FetchImplementation,
+  type OrganizationRequestOptions,
+  type RequestOptions,
+  type WorkspaceRequestOptions,
+} from './lib/client.js';
+export type {
+  ApiErrorCode,
+  AuthResponse,
+  CurrentUserResponse,
+  ErrorResponse,
+  GetCurrentOrganizationOperation,
+  GetCurrentUserOperation,
+  GetCurrentWorkspaceOperation,
+  LoginOperation,
+  LoginRequest,
+  LogoutOperation,
+  Organization,
+  RegisterOperation,
+  RegisterRequest,
+  User,
+  Workspace,
+} from './lib/types.js';
+export type * from './generated/openapi.js';

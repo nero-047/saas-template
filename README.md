@@ -140,10 +140,30 @@ pnpm nx run rn:validate-ios
 pnpm nx run rn:build-android --mode=debug
 ```
 
-The mobile app does not currently depend on workspace libraries. Future mobile
-code may use the portable `shared`, `validation`, and `api-client` packages when
-their public contracts are native-safe; it must not import the web-only `ui`
+The mobile app declares the native-safe `api-client` dependency so future
+features can consume generated HTTP contracts without package-manager changes;
+the blank shell does not call it yet. It may also use portable `shared` and
+`validation` APIs when justified, but it must not import the web-only `ui`
 package.
+
+## API contracts and TypeScript client
+
+`packages/contracts/openapi/openapi.yaml` is the only language-neutral HTTP
+contract source. The committed TypeScript output and framework-neutral fetch
+client live in `packages/api-client` for browser, server, and React Native use.
+Regenerate and verify it with:
+
+```sh
+pnpm nx run contracts:validate
+pnpm nx run api-client:generate
+pnpm nx run api-client:check-generated
+pnpm nx run-many -t lint typecheck test build -p api-client
+```
+
+The client is configured by each consumer with a base URL and cookie credential
+mode; it does not embed deployment URLs or secrets. Flutter remains isolated:
+its future Dart package will be generated from the same OpenAPI source rather
+than importing TypeScript.
 
 ## Flutter application
 

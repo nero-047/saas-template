@@ -42,5 +42,9 @@ native release build or signing pipeline.
 ## Contract boundary
 
 Flutter must not import TypeScript workspace packages. When the API contracts
-stabilize, Dart clients and models will be generated from a language-neutral API
-description rather than duplicated manually or imported from TypeScript source.
+stabilize, Dart clients and models will be generated from
+`packages/contracts/openapi/openapi.yaml` into
+`apps/flutter/packages/saas_api_client` rather than duplicated manually or
+imported from TypeScript source. The pinned, future-only generator evaluation
+is documented in `packages/contracts/generators/dart/README.md`; no Dart SDK or
+Flutter dependency is added by the current foundation.
