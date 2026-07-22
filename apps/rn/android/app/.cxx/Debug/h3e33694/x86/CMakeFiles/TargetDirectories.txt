@@ -1,3 +1,0 @@
-/Users/nero/Desktop/tolangi/saas-template/apps/rn/android/app/.cxx/Debug/h3e33694/x86/CMakeFiles/appmodules.dir
-/Users/nero/Desktop/tolangi/saas-template/apps/rn/android/app/.cxx/Debug/h3e33694/x86/CMakeFiles/edit_cache.dir
-/Users/nero/Desktop/tolangi/saas-template/apps/rn/android/app/.cxx/Debug/h3e33694/x86/CMakeFiles/rebuild_cache.dir

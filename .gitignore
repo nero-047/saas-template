@@ -66,7 +66,9 @@ out
 
 # React Native
 apps/rn/android/.gradle/
-apps/rn/android/**/build/
+apps/rn/android/build/
+apps/rn/android/app/build/
+apps/rn/android/app/.cxx/
 apps/rn/android/local.properties
 apps/rn/ios/Pods/
 apps/rn/ios/build/

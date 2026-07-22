@@ -1,4 +1,0 @@
-/Users/nero/Desktop/tolangi/saas-template/apps/rn/android/app/.cxx/Debug/h3e33694/x86/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/foo.dir
-/Users/nero/Desktop/tolangi/saas-template/apps/rn/android/app/.cxx/Debug/h3e33694/x86/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/boo.dir
-/Users/nero/Desktop/tolangi/saas-template/apps/rn/android/app/.cxx/Debug/h3e33694/x86/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/edit_cache.dir
-/Users/nero/Desktop/tolangi/saas-template/apps/rn/android/app/.cxx/Debug/h3e33694/x86/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/rebuild_cache.dir
